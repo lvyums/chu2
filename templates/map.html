@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>楚韵 - 时空地图</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        /* --- 地图容器 --- */
+        .map-container {
+            border: 4px solid var(--chu-ocher); /* 金色边框 */
+            height: 75vh;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: #F0EAD6; /* 仿古底色 */
+            overflow: hidden;
+        }
+
+        #chuMap { width: 100%; height: 100%; z-index: 1; }
+
+        /* --- 还原：地图复古滤镜 --- */
+        .leaflet-layer {
+            filter: sepia(20%) contrast(95%) opacity(0.9);
+        }
+
+        /* --- 还原：Leaflet 弹窗自定义样式 --- */
+        .leaflet-popup-content-wrapper {
+            background: var(--bg-paper);
+            color: var(--text-dark);
+            border: 2px solid var(--chu-red);
+            font-family: 'Noto Serif SC', serif;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        .leaflet-popup-tip { background: var(--chu-red); }
+        .popup-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--chu-red);
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+        }
+
+        /* --- 还原：城市文字标签样式 --- */
+        .city-label {
+            background: none;
+            border: none;
+            box-shadow: none;
+            font-size: 13px;
+            color: #444; /* 深灰色字 */
+            font-weight: bold;
+            text-shadow: 0 0 3px #fff, 0 0 5px #fff; /* 白色描边确保清晰 */
+            margin-top: -12px !important;
+            margin-left: 8px !important;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        /* --- 时间轴控制条 --- */
+        .control-panel {
+            background: rgba(32, 42, 56, 0.95); /* 靛蓝半透明 */
+            color: var(--text-light);
+            padding: 15px 30px;
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 800px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 1000; /* 确保浮在地图上 */
+            border: 1px solid var(--chu-ocher);
+            backdrop-filter: blur(5px);
+        }
+        .year-display {
+            font-size: 1.4rem;
+            color: var(--chu-ocher);
+            font-family: 'Ma Shan Zheng', cursive;
+            min-width: 160px;
+            text-align: center;
+        }
+        input[type=range] { flex-grow: 1; accent-color: var(--chu-red); cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo brand-font">楚 <span>MUSEUM</span></div>
+        <nav>
+            <ul>
+                <li><a href="index.html">首页</a></li>
+                <li><a href="map.html" class="active">时空地图</a></li>
+                <li><a href="gallery.html">文物图鉴</a></li>
+                <li><a href="library.html">资料库</a></li>
+                <li><a href="game.html">文字挑战</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container" style="max-width: 100%; padding: 0;">
+        <!-- 地图占满容器，移除原本的标题，直接把地图作为核心展示 -->
+        <div class="map-container">
+            <div id="chuMap"></div>
+
+            <div class="control-panel">
+                <div class="year-display" id="yearText">战国早期</div>
+                <input type="range" id="timeSlider" min="-475" max="-220" value="-475" step="1">
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 楚文千机团队 </p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:5000/api';
+
+        document.addEventListener('DOMContentLoaded', initMap);
+
+        async function initMap() {
+            const slider = document.getElementById('timeSlider');
+            const yearText = document.getElementById('yearText');
+
+            // --- 1. 还原：地图基础设置（锁定范围、缩放限制） ---
+            const chinaBounds = [[15.0, 73.0], [54.0, 135.0]]; // 锁定在中国区域
+
+            const map = L.map('chuMap', {
+                center: [31.5, 113.0], // 中心：湖北附近
+                zoom: 6,
+                minZoom: 5,            // 禁止缩得太小
+                maxZoom: 11,
+                maxBounds: chinaBounds,
+                maxBoundsViscosity: 1.0, // 拖动出界后的回弹力度
+                zoomControl: false,
+                attributionControl: false
+            });
+
+            L.control.zoom({ position: 'topright' }).addTo(map);
+
+            // 使用素雅底图
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+                subdomains: 'abcd', maxZoom: 13
+            }).addTo(map);
+
+            let mapLayers = [];
+
+            try {
+                // 获取后端数据
+                const response = await fetch(`${API_BASE_URL}/sites`);
+                const data = await response.json();
+
+                // 确保数据结构正确
+                const centerData = data.center_point || { lat: 30.3, lng: 112.2, name: "郢都" };
+                const sitesData = data.sites || [];
+
+                // --- 2. 绘制中心点 (如：纪南城) ---
+                const centerIcon = L.divIcon({
+                    className: 'center-marker',
+                    html: `<div style="width: 16px; height: 16px; background: #B83B28; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 10px #B83B28;"></div>`,
+                    iconSize: [20, 20]
+                });
+                L.marker([centerData.lat, centerData.lng], { icon: centerIcon })
+                 .addTo(map)
+                 .bindPopup(`<div class="popup-title">${centerData.name}</div>${centerData.desc}`);
+
+                // --- 3. 绘制遗址点 (包含连线、圆点、文字标签) ---
+                sitesData.forEach(site => {
+                    const layerGroup = L.layerGroup().addTo(map);
+
+                    // A. 虚线 (赭石色)
+                    const line = L.polyline([[centerData.lat, centerData.lng], [site.lat, site.lng]], {
+                        color: '#D4A017', weight: 1, opacity: 0.6, dashArray: '5, 5'
+                    }).addTo(layerGroup);
+
+                    // B. 遗址圆点 (靛蓝色)
+                    const marker = L.circleMarker([site.lat, site.lng], {
+                        radius: 6,
+                        fillColor: "#202A38", // 靛蓝
+                        color: "#fff",
+                        weight: 1,
+                        fillOpacity: 1
+                    }).addTo(layerGroup);
+
+                    // C. 还原：城市文字标签 (site.loc)
+                    if (site.loc) {
+                        const labelIcon = L.divIcon({
+                            className: 'city-label',
+                            html: site.loc,  // 显示 "江陵"、"包山" 等
+                            iconSize: [80, 20],
+                            iconAnchor: [-8, 10] //稍微偏移，别挡住圆点
+                        });
+                        L.marker([site.lat, site.lng], { icon: labelIcon, interactive: false }).addTo(layerGroup);
+                    }
+
+                    // D. 弹窗与交互
+                    const popupHtml = `
+                        <div class="popup-title">${site.name}</div>
+                        <div style="font-size:0.9em; color:#666; margin-bottom:5px;"><b>年份:</b> 约前 ${Math.abs(site.year)} 年</div>
+                        <div style="font-size:0.9em; line-height:1.5;">${site.desc}</div>
+                    `;
+                    marker.bindPopup(popupHtml);
+                    line.bindPopup(popupHtml);
+
+                    // 鼠标悬停高亮逻辑
+                    marker.on('mouseover', () => {
+                        marker.setStyle({ radius: 9, fillColor: '#B83B28' }); // 变红
+                        line.setStyle({ color: '#B83B28', weight: 2, dashArray: null }); // 变红实线
+                    });
+                    marker.on('mouseout', () => {
+                        marker.setStyle({ radius: 6, fillColor: '#202A38' }); // 恢复蓝
+                        line.setStyle({ color: '#D4A017', weight: 1, dashArray: '5, 5' }); // 恢复金虚线
+                    });
+
+                    mapLayers.push({ data: site, group: layerGroup });
+                });
+
+                // --- 4. 时间轴过滤逻辑 ---
+                function updateMap() {
+                    const currentYear = parseInt(slider.value);
+                    const absYear = Math.abs(currentYear);
+
+                    // 根据年份显示不同时期名称
+                    let period = "";
+                    if (currentYear <= -403) period = "战国早期";
+                    else if (currentYear <= -323) period = "战国中期";
+                    else period = "战国晚期";
+
+                    yearText.innerText = `${period} (前${absYear})`;
+
+                    // 过滤显示
+                    mapLayers.forEach(item => {
+                        // 逻辑：如果遗址年份早于当前拖动条年份（考虑30年存续期），则显示
+                        if (item.data.year <= currentYear + 30) {
+                            if (!map.hasLayer(item.group)) map.addLayer(item.group);
+                        } else {
+                            if (map.hasLayer(item.group)) map.removeLayer(item.group);
+                        }
+                    });
+                }
+
+                slider.addEventListener('input', updateMap);
+                updateMap(); // 初始化一次
+
+            } catch (error) {
+                console.error("地图数据加载失败", error);
+                // 错误提示UI
+                document.getElementById('chuMap').innerHTML =
+                    `<div style="display:flex; height:100%; align-items:center; justify-content:center; color:#B83B28;">
+                        <p>⚠ 无法连接服务器获取地图数据</p>
+                     </div>`;
+            }
+        }
+    </script>
+</body>
+</html>

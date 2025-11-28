@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>楚韵 - 文物图鉴</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 40px;
+        }
+        .artifact-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            box-shadow: 5px 5px 0 var(--chu-indigo); /* 硬阴影风格 */
+            transition: 0.3s;
+            overflow: hidden;
+        }
+        .artifact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 10px 10px 0 var(--chu-red);
+        }
+        .img-box {
+            height: 250px;
+            background: #f4f4f4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #eee;
+            overflow: hidden;
+        }
+        .img-box img {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.5s;
+        }
+        .artifact-card:hover .img-box img { transform: scale(1.05); }
+        
+        .info-box { padding: 20px; }
+        .info-box h3 { color: var(--chu-indigo); margin-bottom: 10px; font-size: 1.4rem; }
+        .info-box p { font-size: 0.9rem; color: #666; line-height: 1.6; }
+        .tag {
+            display: inline-block;
+            background: var(--chu-ocher);
+            color: #fff;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            border-radius: 2px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo brand-font">楚 <span>MUSEUM</span></div>
+        <nav>
+            <ul>
+                <li><a href="index.html">首页</a></li>
+                <li><a href="map.html">时空地图</a></li>
+                <li><a href="gallery.html" class="active">文物图鉴</a></li>
+                <li><a href="library.html">资料库</a></li>
+                <li><a href="game.html">文字挑战</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>简牍墨迹</h1>
+            <p>千年不朽的楚地书写</p>
+        </div>
+
+        <div class="gallery-grid" id="galleryContainer">
+            <!-- JS 填充 -->
+            <p style="grid-column: 1/-1; text-align: center;">正在从库房提取文物...</p>
+        </div>
+    </div>
+
+    <footer><p>© 2025 楚文千机团队</p></footer>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:5000/api';
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            const container = document.getElementById('galleryContainer');
+            try {
+                const res = await fetch(`${API_BASE_URL}/artifacts`);
+                const items = await res.json();
+                
+                container.innerHTML = '';
+                items.forEach(item => {
+                    let imgSrc = item.img_url;
+
+                    // 1. 如果 JSON 里没有图片链接，使用占位图
+                    if (!imgSrc) {
+                        imgSrc = 'https://via.placeholder.com/300x200?text=No+Image';
+                    }
+                    // 2. 如果链接不是以 http 开头（说明是本地文件），也不是以 /static 开头
+                    //    则自动加上 /static/images/ 前缀
+                    else if (!imgSrc.startsWith('http') && !imgSrc.startsWith('/static/')) {
+                        imgSrc = `/static/images/${imgSrc}`;
+                    }
+                    const card = document.createElement('div');
+                    card.className = 'artifact-card';
+                    card.innerHTML = `
+                        <div class="img-box">
+                            <img src="${item.img_url || 'placeholder.jpg'}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
+                        </div>
+                        <div class="info-box">
+                            <span class="tag">楚简</span>
+                            <h3>${item.title}</h3>
+                            <p>${item.desc}</p>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (e) {
+                container.innerHTML = `<p style="color:var(--chu-red); text-align:center;">数据加载失败</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

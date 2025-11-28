@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>楚韵 - 文字挑战</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .game-area {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--chu-indigo);
+            padding: 3px; /* 边框容器 */
+            border-radius: 8px;
+        }
+        .game-inner {
+            background: #252e3b; /* 略浅于边框 */
+            padding: 40px;
+            text-align: center;
+            border: 1px solid var(--chu-ocher);
+            color: var(--text-light);
+        }
+        .mystery-char {
+            font-size: 8rem;
+            color: var(--chu-ocher);
+            margin: 20px 0;
+            line-height: 1;
+            /* 模拟印章质感 */
+            background: #B83B28;
+            width: 150px;
+            height: 150px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            color: white; 
+        }
+        .options { display: flex; gap: 20px; justify-content: center; margin-top: 30px; }
+        .option-btn {
+            background: transparent;
+            border: 1px solid #666;
+            color: #ddd;
+            font-size: 1.5rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .option-btn:hover {
+            border-color: var(--chu-ocher);
+            color: var(--chu-ocher);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo brand-font">楚 <span>MUSEUM</span></div>
+        <nav>
+            <ul>
+                <li><a href="index.html">首页</a></li>
+                <li><a href="map.html">时空地图</a></li>
+                <li><a href="gallery.html">文物图鉴</a></li>
+                <li><a href="library.html">资料库</a></li>
+                <li><a href="game.html" class="active">文字挑战</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>古字破译</h1>
+            <p>你能认出这枚官印上的文字吗？</p>
+        </div>
+
+        <div class="game-area">
+            <div class="game-inner">
+                <p>此字常见于楚系官印，意为“掌管军政之官”。</p>
+                
+                <div class="mystery-char brand-font">♛</div>
+                
+                <div class="options">
+                    <button class="option-btn" onclick="check(false)">王</button>
+                    <button class="option-btn" onclick="check(true)">司</button>
+                    <button class="option-btn" onclick="check(false)">马</button>
+                    <button class="option-btn" onclick="check(false)">工</button>
+                </div>
+                
+                <div id="result" style="margin-top:20px; height: 20px; color: var(--chu-ocher);"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer><p>© 2025 楚文千机团队</p></footer>
+    
+    <script>
+        function check(isCorrect) {
+            const res = document.getElementById('result');
+            if(isCorrect) {
+                res.innerText = "🎉 恭喜！正是“司”字（司马）。";
+                res.style.color = "#4CAF50";
+            } else {
+                res.innerText = "❌ 亦或是字形相近，请再斟酌。";
+                res.style.color = "#B83B28";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>楚韵 - 资料库</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .file-list {
+            list-style: none;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .file-item {
+            background: #fff;
+            border-left: 5px solid var(--chu-indigo);
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: 0.3s;
+        }
+        .file-item:hover {
+            border-left-color: var(--chu-red);
+            transform: translateX(10px);
+        }
+        .file-icon { font-size: 2rem; margin-right: 15px; color: var(--chu-ocher); }
+        .file-info h3 { font-size: 1.2rem; color: #333; margin-bottom: 5px; }
+        .file-info span { font-size: 0.85rem; color: #999; }
+        
+        .action-group { display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo brand-font">楚 <span>MUSEUM</span></div>
+        <nav>
+            <ul>
+                <li><a href="index.html">首页</a></li>
+                <li><a href="map.html">时空地图</a></li>
+                <li><a href="gallery.html">文物图鉴</a></li>
+                <li><a href="library.html" class="active">资料库</a></li>
+                <li><a href="game.html">文字挑战</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>学术典藏</h1>
+            <p>一手文献与研究资料下载</p>
+        </div>
+
+        <ul class="file-list" id="fileList">
+            <!-- JS 加载 -->
+        </ul>
+    </div>
+
+    <footer><p>© 2025 楚文千机团队</p></footer>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:5000/api';
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            const list = document.getElementById('fileList');
+            try {
+                const res = await fetch(`${API_BASE_URL}/materials`);
+                const files = await res.json();
+                
+                list.innerHTML = '';
+                files.forEach(file => {
+                    const li = document.createElement('li');
+                    li.className = 'file-item';
+                    
+                    let icon = file.type === 'pdf' ? '📜' : '🖼️';
+                    
+                    li.innerHTML = `
+                        <div style="display:flex; align-items:center;">
+                            <span class="file-icon">${icon}</span>
+                            <div class="file-info">
+                                <h3>${file.name}</h3>
+                                <span>文件格式: ${file.type.toUpperCase()}</span>
+                            </div>
+                        </div>
+                        <div class="action-group">
+                            <a href="${file.url}" target="_blank" class="btn-chu btn-outline">预览</a>
+                            <a href="${file.url}" download class="btn-chu">下载</a>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            } catch (e) {
+                list.innerHTML = '<p style="text-align:center;">暂无资料</p>';
+            }
+        });
+    </script>
+</body>
+</html>

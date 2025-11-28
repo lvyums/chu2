@@ -1,0 +1,44 @@
+[
+    {
+      "id": 1,
+      "img_text": "五里牌楚简",
+      "title": "五里牌楚简",
+      "desc": "战国中期 · 长沙",
+      "img_url": "static/images/楚系文字.jpg"
+    },
+    {
+      "id": 2,
+      "img_text": "望山楚简",
+      "title": "望山楚简",
+      "desc": "战国 · 荆州",
+      "img_url": "static/images/望山楚简.webp"
+    },
+    {
+      "id": 3,
+      "img_text": "天星观楚简",
+      "title": "天星观楚简",
+      "desc": "战国 · 荆州",
+      "img_url": "static/images/楚简.jpg"
+    },
+      {
+      "id": 4,
+      "img_text": "郭店竹简",
+      "title": "郭店竹简",
+      "desc": "战国 · 荆门",
+      "img_url": "static/images/《周易》.webp"
+    },
+        {
+      "id": 5,
+      "img_text": "秦家咀竹简",
+      "title": "秦家咀竹简",
+      "desc": "战国中期 · 荆州",
+      "img_url": "static/images/秦家嘴.webp"
+    },
+        {
+      "id": 6,
+      "img_text": "信阳长台关楚简",
+      "title": "信阳长台关楚简",
+      "desc": "战国 · 信阳",
+      "img_url": "static/images/信阳楚简.webp"
+    }
+]

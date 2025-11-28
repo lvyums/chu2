@@ -1,0 +1,137 @@
+/* --- style.css --- */
+@import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap');
+
+:root {
+    /* 楚风配色方案 */
+    --chu-red: #B83B28;       /* 朱红：漆器主色 */
+    --chu-indigo: #202A38;    /* 靛蓝：深沉背景 */
+    --chu-ocher: #D4A017;     /* 赭石/金：装饰与高亮 */
+    --bg-paper: #F4F1E8;      /* 浅灰/米色：仿古纸张背景 */
+    --text-dark: #2C1E1C;     /* 深褐：正文颜色 */
+    --text-light: #F4F1E8;    /* 浅色：深色背景上的文字 */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background-color: var(--bg-paper);
+    color: var(--text-dark);
+    font-family: 'Noto Serif SC', 'SimSun', serif; /* 正文宋体 */
+    line-height: 1.8;
+    background-image: radial-gradient(#E6E2D6 1px, transparent 1px); /* 细微噪点纹理 */
+    background-size: 20px 20px;
+}
+
+/* --- 楚式排版组件 --- */
+h1, h2, h3, .brand-font {
+    font-family: 'Ma Shan Zheng', cursive; /* 书法字体 */
+    font-weight: 400;
+}
+
+a { text-decoration: none; transition: 0.3s; color: inherit; }
+
+/* --- 导航栏：靛蓝底色 + 凤鸟纹装饰 --- */
+header {
+    background-color: var(--chu-indigo);
+    color: var(--text-light);
+    padding: 0 40px;
+    height: 70px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 4px solid var(--chu-red);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo {
+    font-size: 28px;
+    color: var(--chu-ocher);
+    letter-spacing: 2px;
+}
+
+nav ul { display: flex; gap: 40px; }
+nav a {
+    color: #bbb;
+    font-size: 16px;
+    position: relative;
+    padding: 5px 0;
+}
+nav a:hover, nav a.active {
+    color: var(--text-light);
+}
+/* 简易云纹装饰线 */
+nav a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--chu-red);
+    transition: 0.3s;
+}
+nav a:hover::after { width: 100%; }
+
+/* --- 通用容器 --- */
+.container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+    min-height: 80vh;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 50px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 20px;
+    position: relative;
+}
+.page-header h1 {
+    font-size: 3.5rem;
+    color: var(--chu-red);
+}
+/* 装饰性云纹图案 */
+.page-header::after {
+    content: "☁ ☁ ☁";
+    display: block;
+    color: var(--chu-ocher);
+    font-size: 20px;
+    margin-top: 10px;
+    letter-spacing: 10px;
+}
+
+/* --- 按钮样式 --- */
+.btn-chu {
+    background: var(--chu-red);
+    color: #fff;
+    padding: 10px 25px;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    font-family: 'Noto Serif SC', serif;
+    font-weight: bold;
+    border: 1px solid var(--chu-red);
+}
+.btn-chu:hover {
+    background: transparent;
+    color: var(--chu-red);
+}
+.btn-outline {
+    background: transparent;
+    color: var(--chu-indigo);
+    border: 1px solid var(--chu-indigo);
+}
+
+/* --- Footer --- */
+footer {
+    background: var(--chu-indigo);
+    color: #888;
+    text-align: center;
+    padding: 30px;
+    margin-top: 60px;
+    border-top: 4px solid var(--chu-ocher);
+}

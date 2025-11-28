@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>楚韵·文字 - 首页</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* 首页特有样式 */
+        .hero {
+            height: 85vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            background: linear-gradient(rgba(32, 42, 56, 0.9), rgba(32, 42, 56, 0.8)), url('https://source.unsplash.com/random/1920x1080/?ancient,texture'); /* 这里的URL仅作占位，实际建议放一张漆器纹理图 */
+            background-size: cover;
+            color: var(--text-light);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-border {
+            border: 2px solid var(--chu-ocher);
+            padding: 40px 60px;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            position: relative;
+        }
+        /* 四角装饰 */
+        .hero-border::before, .hero-border::after {
+            content: ''; position: absolute; width: 20px; height: 20px;
+            border: 3px solid var(--chu-red); transition: 0.5s;
+        }
+        .hero-border::before { top: -5px; left: -5px; border-right: none; border-bottom: none; }
+        .hero-border::after { bottom: -5px; right: -5px; border-left: none; border-top: none; }
+
+        .hero h1 { font-size: 6rem; margin-bottom: 20px; text-shadow: 4px 4px 0 var(--chu-red); }
+        .hero p { font-size: 1.5rem; color: #ddd; font-weight: 300; letter-spacing: 5px; margin-bottom: 40px; }
+
+        .grid-nav {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+            margin-top: 40px;
+        }
+        
+        .nav-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 30px;
+            transition: 0.4s;
+            cursor: pointer;
+        }
+        .nav-card:hover {
+            background: var(--chu-red);
+            border-color: var(--chu-red);
+            transform: translateY(-10px);
+        }
+        .nav-card h3 { font-size: 1.8rem; margin-bottom: 10px; color: var(--chu-ocher); }
+        .nav-card p { font-size: 0.9rem; color: #ccc; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo brand-font">楚 <span>MUSEUM</span></div>
+        <nav>
+            <ul>
+                <li><a href="index.html" class="active">首页</a></li>
+                <li><a href="map.html">时空地图</a></li>
+                <li><a href="gallery.html">文物图鉴</a></li>
+                <li><a href="library.html">资料库</a></li>
+                <li><a href="game.html">文字挑战</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="hero">
+        <div class="hero-border">
+            <h1 class="brand-font">楚韵 · 文字</h1>
+            <p>解码战国楚地的文字密码</p>
+        </div>
+        
+        <div class="grid-nav">
+            <a href="map.html" class="nav-card">
+                <h3>时空地图</h3>
+                <p>可视化呈现楚简出土的地理与时间分布</p>
+            </a>
+            <a href="gallery.html" class="nav-card">
+                <h3>简牍图鉴</h3>
+                <p>高清简牍影像，毫厘之间见真章</p>
+            </a>
+            <a href="game.html" class="nav-card">
+                <h3>破译挑战</h3>
+                <p>趣味互动，体验古文字学者的日常</p>
+            </a>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 楚文千机团队 </p>
+    </footer>
+
+</body>
+</html>
