@@ -1,6 +1,6 @@
 // galleryModule.js - Handles the artifact gallery functionality
 
-const API_BASE_URL = 'http://127.0.0.1:5000/api';
+const API_BASE_URL = '/api';
 
 export async function initGallery() {
     const container = document.getElementById('galleryContainer');

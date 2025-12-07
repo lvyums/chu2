@@ -142,5 +142,7 @@ def download_file(filename):
 
 
 if __name__ == '__main__':
-    print(f"服务启动成功! 请访问: http://127.0.0.1:5000")
-    app.run(debug=True, port=5000)
+    # host='0.0.0.0' 允许外网/局域网访问
+    # debug=False 关闭调试模式，生产环境建议关闭
+    print(f"服务启动成功! 请访问: http://0.0.0.0:5000")
+    app.run(host='0.0.0.0', port=5000, debug=False)
