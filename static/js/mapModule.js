@@ -44,21 +44,21 @@ export async function initMap() {
             html: `<div style="width: 16px; height: 16px; background: #B83B28; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 10px #B83B28;"></div>`,
             iconSize: [20, 20]
         });
-        L.marker([centerData.lat, centerData.lng], { icon: centerIcon })
+        L.marker([centerData.latitude, centerData.longitude], { icon: centerIcon })
          .addTo(map)
-         .bindPopup(`<div class="popup-title">${centerData.name}</div>${centerData.desc}`);
+         .bindPopup(`<div class="popup-title">${centerData.name}</div>${centerData.description}`);
 
         // --- 3. 绘制遗址点 (包含连线、圆点、文字标签) ---
         sitesData.forEach(site => {
             const layerGroup = L.layerGroup().addTo(map);
 
             // A. 虚线 (赭石色)
-            const line = L.polyline([[centerData.lat, centerData.lng], [site.lat, site.lng]], {
+            const line = L.polyline([[centerData.latitude, centerData.longitude], [site.latitude, site.longitude]], {
                 color: '#D4A017', weight: 1, opacity: 0.6, dashArray: '5, 5'
             }).addTo(layerGroup);
 
             // B. 遗址圆点 (靛蓝色)
-            const marker = L.circleMarker([site.lat, site.lng], {
+            const marker = L.circleMarker([site.latitude, site.longitude], {
                 radius: 6,
                 fillColor: "#202A38", // 靛蓝
                 color: "#fff",
@@ -66,22 +66,22 @@ export async function initMap() {
                 fillOpacity: 1
             }).addTo(layerGroup);
 
-            // C. 还原：城市文字标签 (site.loc)
-            if (site.loc) {
+            // C. 还原：城市文字标签 (site.location)
+            if (site.location) {
                 const labelIcon = L.divIcon({
                     className: 'city-label',
-                    html: site.loc,  // 显示 "江陵"、"包山" 等
+                    html: site.location,  // 显示 "江陵"、"包山" 等
                     iconSize: [80, 20],
                     iconAnchor: [-8, 10] //稍微偏移，别挡住圆点
                 });
-                L.marker([site.lat, site.lng], { icon: labelIcon, interactive: false }).addTo(layerGroup);
+                L.marker([site.latitude, site.longitude], { icon: labelIcon, interactive: false }).addTo(layerGroup);
             }
 
             // D. 弹窗与交互
             const popupHtml = `
                 <div class="popup-title">${site.name}</div>
                 <div style="font-size:0.9em; color:#666; margin-bottom:5px;"><b>年份:</b> 约前 ${Math.abs(site.year)} 年</div>
-                <div style="font-size:0.9em; line-height:1.5;">${site.desc}</div>
+                <div style="font-size:0.9em; line-height:1.5;">${site.description}</div>
             `;
             marker.bindPopup(popupHtml);
             line.bindPopup(popupHtml);

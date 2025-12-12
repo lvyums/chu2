@@ -1,11 +1,22 @@
 import json
 import os
-from flask import Flask, jsonify, request, render_template, url_for, send_from_directory
+from flask import Flask, jsonify, request, render_template, url_for, send_from_directory, redirect
 from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+import database
+from database import db, CenterPoint, ArchaeologicalSite
+# Admin imports moved to init_admin() in admin.py
+# from flask_admin import Admin
+# from flask_admin.contrib.sqla import ModelView
+# from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 
 # 指向 templates 文件夹
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
+
+database.init_app(app)
+
+# Admin initialization moved after route definitions to prevent routing conflicts
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -15,16 +26,28 @@ def get_file_path(filename):
 
 
 def load_sites_data():
-    file_path = get_file_path('sites.json')
+    """从数据库加载遗址数据"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        with app.app_context():
+            # 获取中心点数据
+            center_point = CenterPoint.query.first()
+            center_point_data = center_point.to_dict() if center_point else {}
+
+            # 获取所有遗址数据
+            sites = ArchaeologicalSite.query.all()
+            sites_data = [site.to_dict() for site in sites]
+
+            return {
+                "center_point": center_point_data,
+                "sites": sites_data
+            }
     except Exception as e:
-        print(f"读取 sites.json 失败: {e}")
-        return {"error": "Data file not found", "center_point": {}, "sites": []}
+        print(f"从数据库读取遗址数据失败: {e}")
+        return {"error": "Database query failed", "center_point": {}, "sites": []}
 
 
 def load_artifacts_data():
+    """从JSON文件加载文物数据（暂未迁移到数据库）"""
     file_path = get_file_path('artifacts.json')
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -75,30 +98,44 @@ def game_page():
 
 @app.route('/api/sites', methods=['GET'])
 def get_map_data():
+    """获取所有遗址数据"""
     data = load_sites_data()
     return jsonify(data)
 
 
 @app.route('/api/sites/filter', methods=['GET'])
 def filter_sites_by_year():
+    """根据年份筛选遗址"""
     year_param = request.args.get('year', type=int)
     if year_param is None:
         return jsonify({"error": "Missing year parameter"}), 400
-    data = load_sites_data()
-    all_sites = data.get('sites', [])
-    filtered_sites = [site for site in all_sites if site.get('year', 0) <= year_param + 30]
-    return jsonify({"count": len(filtered_sites), "sites": filtered_sites})
+
+    try:
+        with app.app_context():
+            # 直接从数据库筛选数据
+            filtered_sites = ArchaeologicalSite.query.filter(
+                ArchaeologicalSite.year <= year_param + 30
+            ).all()
+            sites_data = [site.to_dict() for site in filtered_sites]
+            return jsonify({"count": len(sites_data), "sites": sites_data})
+    except Exception as e:
+        print(f"数据库查询失败: {e}")
+        return jsonify({"error": "Database query failed"}), 500
 
 
 @app.route('/api/sites/<int:site_id>', methods=['GET'])
 def get_site_detail(site_id):
-    data = load_sites_data()
-    sites = data.get('sites', [])
-    target_site = next((site for site in sites if site['id'] == site_id), None)
-    if target_site:
-        return jsonify(target_site)
-    else:
-        return jsonify({"error": "Site not found"}), 404
+    """获取特定遗址详情"""
+    try:
+        with app.app_context():
+            site = ArchaeologicalSite.query.get(site_id)
+            if site:
+                return jsonify(site.to_dict())
+            else:
+                return jsonify({"error": "Site not found"}), 404
+    except Exception as e:
+        print(f"数据库查询失败: {e}")
+        return jsonify({"error": "Database query failed"}), 500
 
 
 @app.route('/api/artifacts', methods=['GET'])
@@ -140,9 +177,20 @@ def list_materials():
 def download_file(filename):
     return send_from_directory(MATERIALS_FOLDER, filename, as_attachment=True)
 
+# app.py
+@app.route('/admin/static/<path:filename>.map')
+def no_map(filename):
+    return '', 204
+# Removed deprecated before_first_request - tables created in main block
+
+# Initialize admin after all route definitions to prevent routing conflicts
+from admin import init_admin
+init_admin(app)
 
 if __name__ == '__main__':
     # host='0.0.0.0' 允许外网/局域网访问
     # debug=False 关闭调试模式，生产环境建议关闭
+    with app.app_context():
+        db.create_all()  # 确保在应用启动时创建表
     print(f"服务启动成功! 请访问: http://0.0.0.0:5000")
     app.run(host='0.0.0.0', port=5000, debug=False)
