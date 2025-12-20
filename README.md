@@ -1,225 +1,190 @@
-# 楚文化时空考古数据库系统
 
-## 项目简介
+# 楚文字知识性科普网站 (Chu Script Knowledge Popularization Platform)
 
-本系统是展示楚文化时空分布的交互式Web平台，以**时空可视化**为核心，整合考古遗址数据、文物信息和学术资源，呈现从西周至战国时期的楚文明发展脉络。系统采用现代Web技术栈构建，支持高效数据查询与动态可视化，适用于学术研究、文化展示和教育应用。
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Framework-Flask-green)](https://flask.palletsprojects.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
-### 核心特性
-- **时空可视化**：动态时间轴展示楚文化演变
-- **结构化数据**：考古遗址、文物信息的标准化管理
-- **多层验证**：坐标范围、年代范围自动校验
-- **数据溯源**：完整的JSON备份与操作审计系统
+> 一个集学术性与趣味性于一体的 Web 平台，致力于通过数字化手段普及**楚系文字**与**楚地考古文化**。系统整合了时空地图、文物图鉴与交互式文字破译游戏，生动呈现从西周至战国时期的楚文明风貌。
 
-### 技术栈
-- **后端**：Flask + SQLAlchemy
-- **数据库**：SQLite (开发) / PostgreSQL (生产)
-- **前端**：HTML5 + JavaScript (Leaflet地图库)
-- **部署**：Gunicorn + Nginx
+ [功能特性](#-功能特性) | [快速开始](#-快速开始-本地开发) | [部署指南](#-生产环境部署)
 
 ---
 
-## 生产环境 .env 配置指引
+## 📖 项目简介
 
-项目根目录下的 `.env` 文件用于存放**敏感配置**，**切勿提交到 Git**（已加入 `.gitignore`）。
+本项目旨在降低公众接触古文字的门槛。通过 Leaflet 交互地图展示楚文化疆域变迁，结合“古字破译”互动游戏，让用户在娱乐中学习楚系简帛文字、鸟虫书及官印文字知识。后台配备完善的数据管理系统，支持内容的可视化维护。
 
-### 必需字段
+### ✨ 功能特性
 
-| 变量名 | 说明 | 示例值 |
-|--------|------|--------|
-| `DATABASE_URL` | 数据库连接串 | `sqlite:///production.db` |
-| `ADMIN_PASSWORD` | 后台登录密码（≥20 位随机字符） | `sXRt9G3pQMVRKLnY8mTq` |
-| `SECRET_KEY` | Flask session 密钥（64 位随机） | `qK3t7f9b3a0e...` |
+*   **🗺️ 时空可视化地图**：
+    *   动态时间轴：展示楚国疆域随年代的变化。
+    *   遗址分布：点击地图坐标查看相关出土简牍与文物详情。
+*   **🎮 楚韵·文字挑战**：
+    *   每日随机题库：基于 JSON/数据库 的 50+ 道题库，涵盖字形辨析、历史典故与器物知识。
+    *   互动反馈：即时判断正误，提供详细的学术解析。
+*   **🛡️ 综合管理后台**：
+    *   可视化仪表盘：实时统计题库数量、遗址点位与访问数据。
+    *   数据管理：支持对题库、遗址坐标、中心点配置的增删改查 (CRUD)。
+    *   安全认证：基于 Flask-Login 的管理员权限控制。
+*   **⚙️ 双模数据架构**：
+    *   开发友好：支持直接读取 JSON 文件 (`quiz_questions.json`, `sites.json`)。
+    *   生产稳定：通过 `migrate.py` 工具一键将 JSON 同步至 SQLite/PostgreSQL 数据库。
 
-### 一键生成随机值（PowerShell）
-
-```powershell
-# 生成 20 位安全密码
-$rng = New-Object System.Security.Cryptography.RNGCryptoServiceProvider
-$bytes = New-Object byte[] 15
-$rng.GetBytes($bytes)
-$env:ADMIN_PASSWORD = [Convert]::ToBase64String($bytes) -replace '[+/=]',''
-
-# 生成 64 位 SECRET_KEY
-$bytes = New-Object byte[] 48
-$rng.GetBytes($bytes)
-$env:SECRET_KEY = [Convert]::ToBase64String($bytes)
-
-# 查看结果
-echo $env:ADMIN_PASSWORD
-echo $env:SECRET_KEY
 ---
-```
 
-## 部署到服务器
+## 🛠️ 技术栈
 
+*   **后端核心**：Python Flask, SQLAlchemy (ORM)
+*   **后台管理**：Flask-Admin, Flask-Login
+*   **前端交互**：HTML5, CSS3 (自定义样式), JavaScript (ES6+), Leaflet.js (地图)
+*   **数据存储**：SQLite (本地开发) / PostgreSQL (生产环境)
+*   **服务器**：Nginx + Gunicorn
 
-### 1. 环境准备
+---
 
+## 🚀 快速开始 (本地开发)
+
+### 1. 克隆项目
 ```bash
-# 安装系统依赖
-sudo apt-get update
-sudo apt-get install -y python3-pip python3-venv nginx postgresql
+git clone https://github.com/yourusername/chu-script-web.git
+cd chu-script-web
+```
+### 2. 环境配置
+建议使用 Python 虚拟环境以隔离依赖：
 
-# 创建虚拟环境
+Windows:
+
+```Bash
+python -m venv venv
+venv\Scripts\activate
+```
+Linux / macOS:
+
+```Bash
 python3 -m venv venv
 source venv/bin/activate
+```
+安装依赖:
 
-# 安装项目依赖
+```Bash
 pip install -r requirements.txt
 ```
+### 3.配置环境变量
 
-### 2. 数据库配置
+在项目根目录创建 .env 文件:
 
-```bash
-# 创建PostgreSQL数据库
-sudo -u postgres psql -c "CREATE DATABASE chu_db;"
-sudo -u postgres psql -c "CREATE USER chu_user WITH PASSWORD 'secure_password';"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE chu_db TO chu_user;"
-```
+ Flask 配置
+````
+FLASK_APP=app.py
+FLASK_ENV=development
+SECRET_KEY=dev-key-please-change-in-prod
+````
+数据库配置 (默认使用本地 SQLite)
+````
+DATABASE_URL=sqlite:///chu.db
+````
+后台管理员默认密码
+````
+ADMIN_PASSWORD=123456
+````
+### 4.数据初始化
 
-编辑`.env`文件配置数据库连接：
-```env
-DATABASE_URL=postgresql://chu_user:secure_password@localhost/chu_db
-```
+本项目包含自动迁移脚本，可将静态 JSON 数据导入数据库：
 
-### 3. 初始化系统
-
-```bash
-# 初始化数据库结构
+1. 初始化数据库表结构
+````
 python migrate.py init
-
-# 迁移JSON数据到数据库
+````
+2. 导入题库和遗址数据 (读取 static/quiz_questions.json 等)
+````
 python migrate.py migrate
-
-# 验证数据完整性
+````
+ 3. (可选) 验证数据完整性
+````
 python migrate.py validate
+````
+ 4. 启动应用
+
+```Bash
+python app.py
+前台首页: http://127.0.0.1:5000
+管理后台: http://127.0.0.1:5000/admin
 ```
+# 🔧 数据维护指南
+方式一：通过管理后台 (推荐)
+登录 /admin 后台，进入**“互动游戏-题库管理”或“地图数据-遗址列表”**，即可进行可视化的添加和修改。修改即时生效。
 
-### 4. 配置Web服务器
+方式二：通过 JSON 文件 (批量更新)
+修改 static/quiz_questions.json 或 sites.json 文件。
+运行迁移命令更新数据库：
 
-**Gunicorn服务配置** (`/etc/systemd/system/chu.service`):
-```ini
+```Bash
+python migrate.py migrate
+```
+# 📦 生产环境部署
+1. 准备 PostgreSQL 数据库
+
+```Bash
+# 登录 Postgres
+sudo -u postgres psql
+
+# 创建库和用户
+CREATE DATABASE chu_web_db;
+CREATE USER chu_admin WITH PASSWORD 'strong_password';
+GRANT ALL PRIVILEGES ON DATABASE chu_web_db TO chu_admin;
+```
+2. 更新生产环境配置 (.env)
+
+```Ini
+FLASK_ENV=production
+DATABASE_URL=postgresql://chu_admin: strong_password@localhost/chu_web_db
+SECRET_KEY=generate-a-random-strong-key-here
+ADMIN_PASSWORD=complex_admin_password
+```
+3. 配置 Gunicorn 与 Systemd
+创建服务文件 /etc/systemd/system/chuweb.service：
+
+```Ini
 [Unit]
-Description=Chu Culture Web Application
+Description=Chu Script Website Gunicorn Daemon
 After=network.target
 
 [Service]
 User=www-data
 Group=www-data
-WorkingDirectory=/path/to/project
-Environment="PATH=/path/to/venv/bin"
-ExecStart=/path/to/venv/bin/gunicorn --workers 3 --bind unix:chu.sock app:app
+WorkingDirectory=/var/www/chu-script-web
+Environment="PATH=/var/www/chu-script-web/venv/bin"
+ExecStart=/var/www/chu-script-web/venv/bin/gunicorn --workers 3 --bind unix:chuweb.sock app:app
 
 [Install]
 WantedBy=multi-user.target
 ```
+4. 配置 Nginx 反向代理
 
-**Nginx配置** (`/etc/nginx/sites-available/chu`):
-```nginx
+```Nginx
 server {
     listen 80;
-    server_name your-domain.com;
+    server_name yourdomain.com;
 
     location / {
         include proxy_params;
-        proxy_pass http://unix:/path/to/project/chu.sock;
+        proxy_pass http://unix:/var/www/chu-script-web/chuweb.sock;
     }
 
     location /static {
-        alias /path/to/project/static;
+        alias /var/www/chu-script-web/static;
     }
 }
 ```
+# 🤝 贡献与反馈
+欢迎对楚文化感兴趣的开发者参与贡献！
 
-### 5. 启动服务
+Fork 本仓库。
+创建特性分支 (git checkout -b feature/NewQuizType)。
+提交代码并推送。
+发起 Pull Request。
 
-```bash
-sudo systemctl start chu
-sudo systemctl enable chu
-sudo systemctl restart nginx
-```
-
----
-
-## 数据库日常维护
-
-### 1. 添加新考古遗址
-
-```bash
-# 1. 编辑JSON源文件
-nano sites.json
-
-# 2. 添加新遗址示例
-{
-  "id": 101,
-  "name": "新遗址名称",
-  "loc": "现代城市名",
-  "lat": 30.5,
-  "lng": 114.3,
-  "year": -600,
-  "desc": "遗址详细描述..."
-}
-
-# 3. 执行数据迁移
-python migrate.py migrate
-
-# 4. 验证结果
-python migrate.py validate
-```
-
-### 2. 数据验证与修复
-
-```bash
-# 验证坐标范围和年代约束
-python migrate.py validate
-
-# 自动修复无效坐标（示例）
-python -c "import migrate; migrate.fix_invalid_coordinates()"
-```
-
-### 3. 数据备份与恢复
-
-**自动备份**：
-- 每日JSON备份存储在 `.json_history/` 目录
-- 所有修改记录在 `data_audit.log`
-
-**手动备份**：
-```bash
-# 备份当前数据库
-cp chu.db chu_db_$(date +"%Y%m%d").bak
-
-# 备份JSON源文件
-cp sites.json .json_history/sites_$(date +"%Y%m%d").json
-```
-
-**从备份恢复**：
-```bash
-# 恢复特定日期的JSON数据
-cp .json_history/sites_20251210.json sites.json
-
-# 重新迁移数据
-python migrate.py migrate
-```
-
-### 4. 管理后台操作
-
-访问管理界面：`http://your-domain.com/admin`
-
-**常用操作**：
-- 查看/编辑考古遗址数据
-- 管理中心点坐标
-- 查看操作审计日志
-- 执行数据库验证
-
-> **注意**：直接通过管理后台修改数据库后，应同步更新JSON源文件以保持一致性
-
----
-
-## 技术支持
-
-- **问题排查**：检查 `data_audit.log` 和系统日志
-- **性能优化**：对 `year` 和 `location` 字段建立索引
-- **扩展建议**：
-  - 将文物数据迁移到数据库
-  - 增加Redis缓存层
-  - 实现API速率限制
+# 📄 版权说明
+本项目内容（文本、代码）遵循 MIT 协议。
+部分文物图片来源于公开网络资料，版权归原博物馆所有，仅作科普展示用途。
