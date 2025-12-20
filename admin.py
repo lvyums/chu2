@@ -4,7 +4,7 @@ from flask_admin.theme import Bootstrap4Theme
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask import request, redirect, url_for, render_template_string, Blueprint
 import os
-from database import db, CenterPoint, ArchaeologicalSite
+from database import db, CenterPoint, ArchaeologicalSite, QuizQuestion
 
 # 初始化登录管理器
 login_manager = LoginManager()
@@ -44,11 +44,13 @@ class SecureAdminIndexView(AdminIndexView):
         # 获取统计数据
         site_count = ArchaeologicalSite.query.count()
         center_count = CenterPoint.query.count()
+        quiz_count = QuizQuestion.query.count()
 
-        # 渲染自定义的 dashboard 模板
+        # 渲染自定义的 dashboard 模板，并传入 quiz_count
         return self.render('admin/index.html',
                            site_count=site_count,
-                           center_count=center_count)
+                           center_count=center_count,
+                           quiz_count=quiz_count)
 
 
 # 创建认证蓝图
@@ -130,3 +132,12 @@ def init_admin(app):
         category='地图数据',
         endpoint='center_admin'
     ))
+
+    # 题库管理
+    quiz_view = SecureModelView(QuizQuestion, db.session, name='题库管理', category='互动游戏', endpoint='quiz_admin')
+    try:
+        quiz_view.column_searchable_list = ['question', 'visual']
+        quiz_view.column_filters = ['answer']
+    except:
+        pass
+    admin.add_view(quiz_view)

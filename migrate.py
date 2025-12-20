@@ -8,7 +8,7 @@ import sys
 import os
 import json
 from app import app, db
-from database import CenterPoint, ArchaeologicalSite
+from database import CenterPoint, ArchaeologicalSite, QuizQuestion
 
 def init_db():
     """初始化数据库"""
@@ -57,8 +57,8 @@ def migrate_data():
         # 迁移遗址数据
         sites_data = data.get('sites', [])
         for site_data in sites_data:
+            # Auto-generate ID to avoid uniqueness conflicts
             site = ArchaeologicalSite(
-                id=site_data.get('id'),
                 name=site_data.get('name', ''),
                 location=site_data.get('loc', ''),
                 latitude=site_data.get('lat', 0),
@@ -72,6 +72,33 @@ def migrate_data():
         # 提交事务
         db.session.commit()
         print(f"数据迁移完成! 共迁移 {len(sites_data)} 个遗址")
+
+        # 迁移题库数据
+        quiz_file = os.path.join(os.path.dirname(__file__), 'quiz_questions.json')
+        if os.path.exists(quiz_file):
+            try:
+                with open(quiz_file, 'r', encoding='utf-8') as f:
+                    quiz_data = json.load(f)
+
+                for q in quiz_data:
+                    quiz_question = QuizQuestion(
+                        visual=q['visual'],
+                        question=q['question'],
+                        option1=q['options'][0],
+                        option2=q['options'][1],
+                        option3=q['options'][2],
+                        option4=q['options'][3],
+                        answer=q['answer'],
+                        explanation=q['explanation']
+                    )
+                    db.session.add(quiz_question)
+
+                db.session.commit()
+                print(f"已迁移 {len(quiz_data)} 道题库题目")
+            except Exception as e:
+                print(f"题库数据迁移失败: {str(e)}")
+        else:
+            print("未找到 quiz_questions.json，跳过题库迁移")
 
 def main():
     if len(sys.argv) < 2:

@@ -3,8 +3,9 @@ import os
 from flask import Flask, jsonify, request, render_template, url_for, send_from_directory, redirect
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from flask import send_from_directory
 import database
-from database import db, CenterPoint, ArchaeologicalSite
+from database import db, CenterPoint, ArchaeologicalSite, QuizQuestion
 # Admin imports moved to init_admin() in admin.py
 # from flask_admin import Admin
 # from flask_admin.contrib.sqla import ModelView
@@ -142,6 +143,26 @@ def get_site_detail(site_id):
 def get_artifacts():
     data = load_artifacts_data()
     return jsonify(data)
+
+@app.route('/quiz_questions.json')
+def serve_quiz_json():
+    # 允许浏览器读取根目录下的 quiz_questions.json
+    return send_from_directory('.', 'quiz_questions.json')
+
+
+@app.route('/api/quiz-questions', methods=['GET'])
+def get_quiz_questions():
+    """获取5道随机题库题目"""
+    try:
+        with app.app_context():
+            questions = QuizQuestion.query.order_by(db.func.random()).limit(5).all()
+            return jsonify([q.to_dict() for q in questions])
+    except Exception as e:
+        print(f"数据库查询失败: {e}")
+        return jsonify({"error": "Database query failed"}), 500
+
+
+
 
 
 # ===========================

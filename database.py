@@ -64,6 +64,33 @@ class ArchaeologicalSite(db.Model):
         }
 
 
+class QuizQuestion(db.Model):
+    __tablename__ = 'quiz_questions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    visual = db.Column(db.String(10), nullable=False)
+    question = db.Column(db.Text, nullable=False)
+    option1 = db.Column(db.String(100), nullable=False)
+    option2 = db.Column(db.String(100), nullable=False)
+    option3 = db.Column(db.String(100), nullable=False)
+    option4 = db.Column(db.String(100), nullable=False)
+    answer = db.Column(db.Integer, nullable=False)
+    explanation = db.Column(db.Text, nullable=False)
+
+    __table_args__ = (
+        db.CheckConstraint('answer BETWEEN 0 AND 3', name='valid_answer_range'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'visual': self.visual,
+            'question': self.question,
+            'options': [self.option1, self.option2, self.option3, self.option4],
+            'answer': self.answer,
+            'explanation': self.explanation
+        }
+
 # ===== 2. 初始化函数 =====
 
 def init_app(app: Flask):

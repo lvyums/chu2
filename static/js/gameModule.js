@@ -1,80 +1,43 @@
 /**
- * 楚韵 - 文字挑战游戏逻辑模块
- * 对应页面：templates/game.html
+ * 楚韵 - 文字挑战逻辑库
+ * 数据源：quiz_questions.json
  */
 
-// ==================== 题库数据 (50题) ====================
-const fullQuestionLibrary = [
-    // --- 楚文字/语言类 (10题) ---
-    { visual: '♛', question: '此字见于楚系官印，意为“掌管军政之官”，请问是？', options: ['王', '司', '马', '工'], answer: 1, explanation: '【司】即“司马”。楚国官制中，司马掌管军赋。' },
-    { visual: '鸟', question: '楚国兵器上常出现的一种装饰性极强的美术字体是？', options: ['瘦金体', '鸟虫书', '甲骨文', '小篆'], answer: 1, explanation: '【鸟虫书】流行于春秋战国南方的美术字体，常用于兵器铭文。' },
-    { visual: '冷', question: '楚方言中，“不穀(gǔ)”是哪种人的自称？', options: ['农夫', '国君', '商人', '士兵'], answer: 1, explanation: '【国君】“不穀”意为不善，是楚王自谦的称呼，类似“孤”或“寡人”。' },
-    { visual: '简', question: '研究楚文字最重要的出土文物载体是？', options: ['羊皮纸', '竹简', '石碑', '陶片'], answer: 1, explanation: '【竹简】如郭店楚简、清华简，保留了大量战国楚墨迹。' },
-    { visual: '郢', question: '楚国都城“郢”在文字学上的本意与什么有关？', options: ['高山', '田地', '城池', '水流'], answer: 2, explanation: '【城池】郢在楚语中即为国都、城池之意。' },
-    { visual: '徒', question: '楚国官职“莫敖”的主要职责涉及？', options: ['祭祀', '外交', '农耕', '刑罚'], answer: 1, explanation: '【外交】莫敖是楚国独有的高官，早期掌管军事，后多负责外交。' },
-    { visual: '卜', question: '楚地出土的《包山楚简》主要记录了什么内容？', options: ['诗歌', '司法文书', '食谱', '小说'], answer: 1, explanation: '【司法文书】包山楚简记录了大量当时的诉讼和司法档案。' },
-    { visual: '名', question: '楚人名字中常带有“若”字（如若敖），其含义多关联？', options: ['神灵', '顺从', '像', '选择'], answer: 2, explanation: '【像】在古楚语境中，常有通过名字表达某种希冀或特征。' },
-    { visual: '些', question: '《楚辞·招魂》中句尾常用的“些”字，读音其实接近？', options: ['xiē', 'suō', 'shà', 'hā'], answer: 1, explanation: '【suō】在楚方言吟诵中，“些”是语助词，读音古特。' },
-    { visual: '兮', question: '楚辞中最具代表性的语气助词是？', options: ['之', '乎', '者', '兮'], answer: 3, explanation: '【兮】“兮”字是骚体诗的灵魂，调节节奏与情感。' },
-
-    // --- 历史/人物类 (10题) ---
-    { visual: '霸', question: '春秋五霸中，一鸣惊人的楚国国君是？', options: ['楚武王', '楚庄王', '楚怀王', '楚平王'], answer: 1, explanation: '【楚庄王】问鼎中原，一鸣惊人，是著名的春秋霸主。' },
-    { visual: '屈', question: '屈原投江殉国的地点是？', options: ['黄河', '长江', '汨罗江', '汉水'], answer: 2, explanation: '【汨罗江】公元前278年，屈原于汨罗江怀石自沉。' },
-    { visual: '春', question: '战国四公子中，属于楚国的是？', options: ['孟尝君', '平原君', '信陵君', '春申君'], answer: 3, explanation: '【春申君】黄歇，楚国令尹，战国四公子之一。' },
-    { visual: '伍', question: '因父兄被杀而叛楚奔吴，最终攻破郢都的名将是？', options: ['孙武', '伍子胥', '白起', '吴起'], answer: 1, explanation: '【伍子胥】通过鞭尸楚平王报了父兄之仇。' },
-    { visual: '吴', question: '楚悼王任用哪位改革家进行了变法？', options: ['商鞅', '李斯', '吴起', '韩非'], answer: 2, explanation: '【吴起】吴起变法使楚国一度强盛，打击了贵族势力。' },
-    { visual: '美', question: '“楚王好细腰”中的楚王指的是？', options: ['楚灵王', '楚庄王', '楚威王', '楚怀王'], answer: 0, explanation: '【楚灵王】章华宫中多饿死，只因楚王好细腰。' },
-    { visual: '女', question: '传说中楚人的始祖是？', options: ['黄帝', '炎帝', '颛顼', '祝融'], answer: 2, explanation: '【颛顼】屈原《离骚》云：“帝高阳之苗裔兮”，高阳氏即颛顼。' },
-    { visual: '火', question: '楚国公族尊奉的火神是？', options: ['祝融', '共工', '伏羲', '女娲'], answer: 0, explanation: '【祝融】楚人自视为祝融之后，崇尚火与红色。' },
-    { visual: '熊', question: '楚国君主的姓氏是“芈”，那他们的氏通常是？', options: ['屈', '景', '昭', '熊'], answer: 3, explanation: '【熊】楚国王族为芈姓熊氏。' },
-    { visual: '哭', question: '申包胥为求秦国出兵救楚，在秦庭痛哭了几日？', options: ['3日', '7日', '10日', '1日'], answer: 1, explanation: '【7日】申包胥哭秦庭七日七夜，终感动秦哀公。' },
-
-    // --- 文物/艺术类 (10题) ---
-    { visual: '鼎', question: '现存最大的青铜鼎“司母戊鼎”属于商代，那楚大鼎又名？', options: ['毛公鼎', '大克鼎', '铸客大鼎', '散氏盘'], answer: 2, explanation: '【铸客大鼎】又名楚大鼎，是战国时期楚国青铜器的代表。' },
-    { visual: '鹤', question: '湖北随州出土的青铜器珍品是？', options: ['四羊方尊', '曾侯乙编钟', '马踏飞燕', '越王勾践剑'], answer: 1, explanation: '【曾侯乙编钟】战国早期文物，代表了楚地音乐文化的巅峰。' },
-    { visual: '鹿', question: '楚墓中常见的“镇墓兽”通常由什么材质制成？', options: ['青铜', '彩绘漆木', '陶土', '玉石'], answer: 1, explanation: '【彩绘漆木】楚国漆器工艺极发达，镇墓兽多为漆木制作，造型奇诡。' },
-    { visual: '鼓', question: '楚文化中常见的乐器，放置在虎座鸟架之上的是？', options: ['编钟', '悬鼓', '琴', '瑟'], answer: 1, explanation: '【悬鼓】即“虎座鸟架鼓”，是楚国特有的乐器架座。' },
-    { visual: '帛', question: '长沙子弹库出土的《人物龙凤图》是现存最早的？', options: ['山水画', '帛画', '壁画', '版画'], answer: 1, explanation: '【帛画】楚国帛画是中国绘画史上的瑰宝。' },
-    { visual: '尊', question: '曾侯乙墓出土的“尊盘”使用了哪种高超工艺？', options: ['失蜡法', '范铸法', '锻打', '鎏金'], answer: 0, explanation: '【失蜡法】尊盘纹饰繁复透空，被认为是失蜡法的巅峰之作。' },
-    { visual: '剑', question: '出土于楚墓，却属于越国国君的绝世宝剑是？', options: ['干将', '莫邪', '鱼肠', '越王勾践剑'], answer: 3, explanation: '【越王勾践剑】出土于湖北江陵望山一号楚墓。' },
-    { visual: '玉', question: '楚人喜玉，楚文化中玉璧常用于？', options: ['货币', '祭祀与装饰', '兵器', '食器'], answer: 1, explanation: '【祭祀与装饰】玉璧既是礼天之器，也是贵族身份象征。' },
-    { visual: '漆', question: '楚国漆器最常用的两种颜色是？', options: ['青与白', '红与黑', '黄与绿', '蓝与紫'], answer: 1, explanation: '【红与黑】“朱画其内，黑质其外”，红黑配色是楚漆器的经典色调。' },
-    { visual: '杯', question: '楚式漆器中一种双耳杯，俗称什么？', options: ['羽觞', '爵', '觚', '觥'], answer: 0, explanation: '【羽觞】耳杯，两侧有耳，像鸟的双翼，故名羽觞。' },
-
-    // --- 地理/风俗/神话 (10题) ---
-    { visual: '凤', question: '楚人最崇拜的图腾神兽是？', options: ['龙', '虎', '凤', '龟'], answer: 2, explanation: '【凤】楚人崇凤，“凤皇”是至高无上的象征。' },
-    { visual: '巫', question: '楚文化带有浓厚的神秘色彩，这种文化传统被称为？', options: ['儒家文化', '巫傩文化', '法家文化', '佛教文化'], answer: 1, explanation: '【巫傩文化】“信鬼好祀”是楚风俗的一大特征。' },
-    { visual: '泽', question: '楚国境内曾经存在的巨大湖泊，古称？', options: ['洞庭湖', '鄱阳湖', '云梦泽', '太湖'], answer: 2, explanation: '【云梦泽】先秦时期楚地著名的巨大湖泊沼泽区。' },
-    { visual: '江', question: '楚国核心统治区域主要位于哪个流域？', options: ['黄河', '长江', '珠江', '淮河'], answer: 1, explanation: '【长江】楚国发源于汉江，兴盛于长江中游。' },
-    { visual: '服', question: '沈从文《中国古代服饰研究》中提到楚人服饰特征是？', options: ['宽袍大袖', '短衣窄袖', '胡服骑射', '右衽深衣'], answer: 0, explanation: '【宽袍大袖】楚地丝织业发达，贵族服饰多飘逸宽大。' },
-    { visual: '台', question: '楚灵王修建的天下第一台是？', options: ['铜雀台', '章华台', '琅琊台', '鹿台'], answer: 1, explanation: '【章华台】又称细腰宫，极尽奢华。' },
-    { visual: '兰', question: '屈原《离骚》中常用来比喻君子美德的植物是？', options: ['牡丹', '兰草', '玫瑰', '柳树'], answer: 1, explanation: '【兰草】香草美人体系中，兰、芷、蕙皆喻美德。' },
-    { visual: '神', question: '《九歌》中掌管寿命与生死的男神是？', options: ['东皇太一', '云中君', '大司命', '河伯'], answer: 2, explanation: '【大司命】大司命主寿，少司命主子嗣。' },
-    { visual: '山', question: '楚国神话中，巫山神女的故事发生于？', options: ['巫山', '泰山', '衡山', '昆仑山'], answer: 0, explanation: '【巫山】宋玉《高唐赋》记载了楚襄王梦会巫山神女之事。' },
-    { visual: '舟', question: '端午节赛龙舟的习俗最初起源于？', options: ['中原', '吴越与楚', '巴蜀', '岭南'], answer: 1, explanation: '【吴越与楚】龙舟竞渡是南方水乡祭祀龙图腾的习俗，后与纪念屈原结合。' },
-
-    // --- 杂项/趣味 (10题) ---
-    { visual: '币', question: '楚国特有的铜贝币，因形状怪异俗称？', options: ['刀币', '蚁鼻钱', '布币', '圆钱'], answer: 1, explanation: '【蚁鼻钱】又称鬼脸钱，文字像蚂蚁或鬼脸。' },
-    { visual: '姓', question: '以下哪个姓氏起源于楚国公族？', options: ['赵', '屈', '姜', '姬'], answer: 1, explanation: '【屈】屈、景、昭是楚国的三大公族大姓。' },
-    { visual: '语', question: '成语“筚路蓝缕”讲的是谁创业的艰辛？', options: ['楚国先祖', '秦国先祖', '齐国先祖', '晋国先祖'], answer: 0, explanation: '【楚国先祖】“筚路蓝缕，以启山林”，描述楚先民在荆山创业之难。' },
-    { visual: '问', question: '“问鼎中原”这个典故最初发生在哪里？', options: ['洛阳', '咸阳', '邯郸', '临淄'], answer: 0, explanation: '【洛阳】楚庄王陈兵周郊（洛阳附近），向周天子使者询问九鼎轻重。' },
-    { visual: '猿', question: '“两岸猿声啼不住”描写的是哪里的景象？', options: ['三峡', '西湖', '黄河', '秦淮河'], answer: 0, explanation: '【三峡】三峡曾是楚国腹地，猿鸣是当地特色。' },
-    { visual: '橘', question: '“后皇嘉树，橘雷受命”出自屈原的？', options: ['《天问》', '《橘颂》', '《山鬼》', '《国殇》'], answer: 1, explanation: '【《橘颂》】借咏橘来言志。' },
-    { visual: '战', question: '秦楚丹阳之战，楚国大败，失去了哪片战略要地？', options: ['河西', '汉中', '陇西', '上党'], answer: 1, explanation: '【汉中】汉中之战的失败，使楚国失去了对秦国的屏障。' },
-    { visual: '足', question: '成语“画蛇添足”的故事发生在哪个国家？', options: ['赵国', '魏国', '楚国', '齐国'], answer: 2, explanation: '【楚国】《战国策·齐策二》记载，楚有祠者，赐其舍人卮酒，舍人画蛇添足。' },
-    { visual: '琴', question: '俞伯牙摔琴谢知音（钟子期）的故事发生在楚地，这把琴是？', options: ['古筝', '瑶琴', '琵琶', '二胡'], answer: 1, explanation: '【瑶琴】伯牙鼓琴，志在高山流水。' },
-    { visual: '盾', question: '“自相矛盾”这个寓言中，卖矛和盾的人是哪里人？', options: ['楚人', '郑人', '鲁人', '宋人'], answer: 0, explanation: '【楚人】“楚人有鬻盾与矛者...”。' }
-];
-
-// ==================== 游戏逻辑控制 ====================
+const DATA_URL = '/quiz_questions.json';
 
 const game = {
+    fullLibrary: [],      // 存放从 JSON 读取的完整题库
     currentQuestions: [], // 当前局抽取的5题
-    currentIdx: 0,        // 当前第几题 (0-4)
-    score: 0,             // 得分
-    isAnswering: false,   // 是否正在答题（防止重复点击）
+    currentIdx: 0,
+    score: 0,
+    isAnswering: false,
 
-    // 获取 DOM 元素辅助函数
+    // 初始化：自动从 JSON 文件加载数据
+    init: async function() {
+        try {
+            console.log('正在加载题库...');
+            const response = await fetch(DATA_URL);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            this.fullLibrary = await response.json();
+            console.log(`题库加载成功，共 ${this.fullLibrary.length} 题`);
+
+            // 可选：更新 UI 提示用户准备就绪（如果有加载文字的话）
+
+        } catch (e) {
+            console.error("题库加载失败:", e);
+            const ui = this.getUI();
+            // 在开始界面显示错误提示
+            if(ui.startScreen) {
+                ui.startScreen.innerHTML += `<p style="color:#B83B28; margin-top:10px;">⚠️ 题库数据加载失败，请检查 quiz_questions.json 文件位置。</p>`;
+            }
+        }
+    },
+
+    // 获取 DOM 元素
     getUI: function() {
         return {
             startScreen: document.getElementById('start-screen'),
@@ -86,7 +49,6 @@ const game = {
             optionsContainer: document.getElementById('options-container'),
 
             currentNum: document.getElementById('current-num'),
-            feedbackArea: document.getElementById('feedback-area'),
             explanationText: document.getElementById('explanation-text'),
             nextBtn: document.getElementById('next-btn'),
 
@@ -95,10 +57,18 @@ const game = {
         };
     },
 
-    // 1. 开始游戏：初始化并随机抽取
+    // 1. 开始游戏
     start: function() {
+        // 检查数据是否已加载
+        if (!this.fullLibrary || this.fullLibrary.length === 0) {
+            alert("题库数据正在加载或加载失败，请刷新页面重试！");
+            // 尝试重新加载
+            this.init();
+            return;
+        }
+
         // 随机打乱完整题库，取前5个
-        const shuffled = [...fullQuestionLibrary].sort(() => 0.5 - Math.random());
+        const shuffled = [...this.fullLibrary].sort(() => 0.5 - Math.random());
         this.currentQuestions = shuffled.slice(0, 5);
 
         this.currentIdx = 0;
@@ -112,7 +82,7 @@ const game = {
         this.loadQuestion();
     },
 
-    // 2. 加载当前题目
+    // 2. 加载题目
     loadQuestion: function() {
         const data = this.currentQuestions[this.currentIdx];
         const ui = this.getUI();
@@ -126,12 +96,11 @@ const game = {
         ui.explanationText.innerHTML = '';
         ui.optionsContainer.innerHTML = '';
 
-        // 设置题目内容
+        // 设置题目
         ui.questionVisual.innerText = data.visual;
-        // 如果 visual 是单字，保持大字体；如果是emoji，可以微调（这里统一样式）
         ui.questionText.innerText = data.question;
 
-        // 动态生成选项按钮
+        // 生成选项
         data.options.forEach((opt, index) => {
             const btn = document.createElement('button');
             btn.className = 'option-btn';
@@ -143,7 +112,7 @@ const game = {
 
     // 3. 检查答案
     checkAnswer: function(selectedIndex, btnElement) {
-        if (!this.isAnswering) return; // 防止重复点击
+        if (!this.isAnswering) return;
         this.isAnswering = false;
 
         const data = this.currentQuestions[this.currentIdx];
@@ -158,20 +127,18 @@ const game = {
             ui.explanationText.innerHTML = `<span style="color:#4CAF50; font-weight:bold;">🎉 正确！</span> ${data.explanation}`;
         } else {
             btnElement.classList.add('wrong');
-            // 高亮正确答案
             buttons[data.answer].classList.add('correct');
             ui.explanationText.innerHTML = `<span style="color:#B83B28; font-weight:bold;">❌ 错误！</span> ${data.explanation}`;
         }
 
-        // 禁用所有按钮
         Array.from(buttons).forEach(btn => btn.disabled = true);
 
-        // 显示“下一题”或“查看结果”按钮
+        // 显示下一题按钮
         ui.nextBtn.classList.remove('hidden');
         ui.nextBtn.innerText = (this.currentIdx === 4) ? "查看结果" : "下一题";
     },
 
-    // 4. 进入下一题或结束
+    // 4. 下一题
     next: function() {
         if (this.currentIdx < 4) {
             this.currentIdx++;
@@ -181,24 +148,28 @@ const game = {
         }
     },
 
-    // 游戏结束
+    // 5. 游戏结束
     endGame: function() {
         const ui = this.getUI();
         ui.gameScreen.classList.add('hidden');
         ui.endScreen.classList.remove('hidden');
 
- ui.finalScore.innerText = this.score;
+        ui.finalScore.innerText = this.score;
 
         let msg = "";
         if (this.score === 5) msg = "🏆 楚学宗师！屈原都要为你点赞！";
         else if (this.score >= 3) msg = "📜 学识渊博，离精通楚文化只差一点点。";
-        else if (this.score >= 1) msg = "🕯️ 学海无涯，建议去【资料库】再进修一番。";
+        else if (this.score >= 1) msg = "🕯️ 继续努力，建议去【资料库】多看看哦。";
         else msg = "🍂 即使失败也是一种经历，再试一次吧！";
 
         ui.finalMessage.innerText = msg;
     }
-
 };
 
-// 将 game 对象挂载到 window，确保 HTML 中的 onclick="game.start()" 可以访问到它
+// ==================== 启动与挂载 ====================
+
+// 1. 自动执行初始化，加载 JSON 数据
+game.init();
+
+// 2. 将 game 对象挂载到 window，确保 HTML onclick 能访问到它
 window.game = game;
