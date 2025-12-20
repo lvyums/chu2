@@ -2,29 +2,39 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>楚韵 - 文字挑战</title>
+    <title>楚韵 - 楚学大挑战</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="/static/favicon_io/site.webmanifest">
+    <link rel="shortcut icon" href="/static/favicon_io/favicon.ico">
     <style>
+        /* 保持原有样式不变，仅增加少量用于控制流程的辅助样式 */
         .game-area {
             max-width: 600px;
             margin: 0 auto;
             background: var(--chu-indigo);
-            padding: 3px; /* 边框容器 */
+            padding: 3px;
             border-radius: 8px;
         }
         .game-inner {
-            background: #252e3b; /* 略浅于边框 */
+            background: #252e3b;
             padding: 40px;
             text-align: center;
             border: 1px solid var(--chu-ocher);
             color: var(--text-light);
+            min-height: 500px; /* 防止内容切换时高度跳动 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
         .mystery-char {
-            font-size: 8rem;
+            font-size: 5rem; /* 稍微调整以适应非单字内容 */
             color: var(--chu-ocher);
-            margin: 20px 0;
             line-height: 1;
-            /* 模拟印章质感 */
             background: #B83B28;
             width: 150px;
             height: 150px;
@@ -33,25 +43,50 @@
             align-items: center;
             justify-content: center;
             border-radius: 4px;
-            color: white; 
+            color: white;
+            padding: 10px;
+            box-sizing: border-box;
         }
-        .options { display: flex; gap: 20px; justify-content: center; margin-top: 30px; }
+        .options { display: flex; gap: 20px; justify-content: center; margin-top: 30px; flex-wrap: wrap;}
         .option-btn {
             background: transparent;
             border: 1px solid #666;
             color: #ddd;
-            font-size: 1.5rem;
-            width: 60px;
-            height: 60px;
+            font-size: 1.2rem;
+            width: 80px; /* 稍微加大一点以容纳不同长度选项 */
+            height: 80px;
             border-radius: 50%;
             cursor: pointer;
             transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
         }
-        .option-btn:hover {
+        .option-btn:hover:not([disabled]) {
             border-color: var(--chu-ocher);
             color: var(--chu-ocher);
             transform: scale(1.1);
         }
+        /* 状态样式 */
+        .option-btn.correct { background: #4CAF50; border-color: #4CAF50; color: white; }
+        .option-btn.wrong { background: #B83B28; border-color: #B83B28; color: white; }
+
+        .hidden { display: none !important; }
+
+        /* 按钮通用样式 (用于开始和下一题) */
+        .action-btn {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: var(--chu-ocher, #d4a024);
+            border: none;
+            color: #252e3b;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .action-btn:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
@@ -63,7 +98,7 @@
                 <li><a href="map.html">时空地图</a></li>
                 <li><a href="gallery.html">文物图鉴</a></li>
                 <li><a href="library.html">资料库</a></li>
-                <li><a href="game.html" class="active">文字挑战</a></li>
+                <li><a href="game.html" class="active">知识挑战</a></li>
             </ul>
         </nav>
     </header>
@@ -71,40 +106,58 @@
     <div class="container">
         <div class="page-header">
             <h1>古字破译</h1>
-            <p>你能认出这枚官印上的文字吗？</p>
+            <p>每日随机 5 题，挑战你的楚学知识</p>
         </div>
 
         <div class="game-area">
             <div class="game-inner">
-                <p>此字常见于楚系官印，意为“掌管军政之官”。</p>
-                
-                <div class="mystery-char brand-font">♛</div>
-                
-                <div class="options">
-                    <button class="option-btn" onclick="check(false)">王</button>
-                    <button class="option-btn" onclick="check(true)">司</button>
-                    <button class="option-btn" onclick="check(false)">马</button>
-                    <button class="option-btn" onclick="check(false)">工</button>
+
+                <!-- 1. 开始界面 -->
+                <div id="start-screen">
+                    <div class="mystery-char brand-font">楚</div>
+                    <p style="margin-top:20px; font-size: 1.2rem;">准备好接受挑战了吗？</p>
+                    <p style="color: #888; font-size: 0.9rem;">(题库共50题，随机抽取5题)</p>
+                    <button class="action-btn" onclick="game.start()">开始挑战</button>
                 </div>
-                
-                <div id="result" style="margin-top:20px; height: 20px; color: var(--chu-ocher);"></div>
+
+                <!-- 2. 游戏进行界面 -->
+                <div id="game-screen" class="hidden">
+                    <div style="width:100%; text-align:right; color:#666; font-size:0.9rem;">
+                        进度: <span id="current-num">1</span> / 5
+                    </div>
+
+                    <p id="question-text" style="min-height: 3rem;">题目加载中...</p>
+
+                    <div id="question-visual" class="mystery-char brand-font">?</div>
+
+                    <div id="options-container" class="options">
+                        <!-- 选项将通过 JS 生成 -->
+                    </div>
+
+                    <div id="feedback-area" style="min-height: 80px; margin-top: 20px;">
+                        <div id="explanation-text"></div>
+                        <button id="next-btn" class="action-btn hidden" onclick="game.next()">下一题</button>
+                    </div>
+                </div>
+
+                <!-- 3. 结算界面 -->
+                <div id="end-screen" class="hidden">
+                    <div class="mystery-char brand-font" style="background:none; border: 2px solid var(--chu-ocher); color: var(--chu-ocher);">完</div>
+                    <h2>挑战结束</h2>
+                    <p style="font-size: 1.5rem; margin: 20px 0;">
+                        得分：<span id="final-score" style="color: var(--chu-ocher); font-weight:bold;">0</span> / 5
+                    </p>
+                    <p id="final-message" style="margin-bottom: 30px;"></p>
+                    <button class="action-btn" onclick="game.start()">再来一局</button>
+                </div>
+
             </div>
         </div>
     </div>
 
     <footer><p>© 2025 楚文千机团队</p></footer>
-    
-    <script>
-        function check(isCorrect) {
-            const res = document.getElementById('result');
-            if(isCorrect) {
-                res.innerText = "🎉 恭喜！正是“司”字（司马）。";
-                res.style.color = "#4CAF50";
-            } else {
-                res.innerText = "❌ 亦或是字形相近，请再斟酌。";
-                res.style.color = "#B83B28";
-            }
-        }
-    </script>
+
+    <!-- 引入外部 JS -->
+    <script src="{{ url_for('static', filename='js/gameModule.js') }}"></script>
 </body>
 </html>
