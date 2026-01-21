@@ -42,8 +42,52 @@
 *   **服务器**：Nginx + Gunicorn
 
 ---
+## 🐳 Docker 快速部署 (推荐)
 
-## 🚀 快速开始 (本地开发)
+本项目已支持 Docker 容器化部署，内置 Python Web 环境与 PostgreSQL 数据库，无需手动安装依赖和配置数据库。
+
+### 1. 准备工作
+确保本地或服务器已安装 [Docker](https://www.docker.com/) 和 [Docker Compose](https://docs.docker.com/compose/)。
+
+### 2. 获取代码
+```bash
+git clone https://github.com/lvyums/chu2.git
+cd chu2
+```
+### 3. 启动服务
+运行以下命令构建镜像并启动容器：
+```bash
+docker-compose up -d --build
+```
+第一次运行需要下载基础镜像，请耐心等待。
+
+### 4.初始化数据 (首次运行必须执行)
+容器启动后，数据库是空的，需要执行以下命令初始化表结构并导入预设数据：
+```bash
+# 1. 初始化数据库表结构
+docker-compose exec web python migrate.py init
+
+# 2. 导入 JSON 数据 (题库和遗址信息)
+docker-compose exec web python migrate.py migrate
+```
+### 5. 访问项目
+前台页面: http://localhost:5000
+后台管理: http://localhost:5000/admin (需先在 app.py 配置 Flask-Admin)
+💾 数据库管理
+项目使用 PostgreSQL 存储数据，Docker 已配置好端口映射，你可以使用 Navicat / DBeaver 直连管理。
+
+| 配置项	                       | 默认值 (docker-compose.yml) |
+|----------------------------|--------------------------|
+| 主机	| localhost (服务器请填写服务器IP)  |
+| 端口	| 5432                     |
+| 数据库| 	chu_db                  |
+| 用户名| 	postgres              |
+| 密码	| postgres           |
+
+⚠️ 生产环境安全警告:
+如果部署在公网服务器，请务必修改 docker-compose.yml 中的 POSTGRES_PASSWORD，并建议移除 ports: - "5432:5432" 映射，防止数据库端口暴露在公网被暴力破解。
+
+## 🚀 本地开发
 
 ### 1. 克隆项目
 ```bash

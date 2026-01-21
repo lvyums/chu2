@@ -1,0 +1,35 @@
+#version: '3.8'
+
+services:
+  # 服务1: 你的 Python 网站
+  web:
+    build: .
+    container_name: chu2-web
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      # 告诉 Python 代码数据库在哪里
+      - DATABASE_URL=postgresql://chu_user:chu_password@db:5432/chu_db
+    depends_on:
+      - db
+
+  # 服务2: 数据库
+  db:
+    # 使用你已经 pull 下来的镜像
+    image: postgres:12-alpine3.20
+    container_name: chu2-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chu_db
+    volumes:
+      # 数据持久化，防止重启丢失
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+
+volumes:
+  pg_data:

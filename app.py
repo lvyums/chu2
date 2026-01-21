@@ -15,6 +15,24 @@ from database import db, CenterPoint, ArchaeologicalSite, QuizQuestion
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
 
+# 1. 优先读取环境变量 DATABASE_URL (Docker环境会传这个变量)
+db_url = os.environ.get('DATABASE_URL')
+
+# 2. 如果没读到 (说明是在本地直接运行，没有用 Docker)，就回退用 SQLite
+if db_url is None:
+    # 使用 instance 文件夹下的 chu.db
+    db_path = os.path.join(app.instance_path, 'chu.db')
+    # 确保 instance 目录存在
+    try:
+        os.makedirs(app.instance_path)
+    except OSError:
+        pass
+    db_url = 'sqlite:///' + db_path
+
+# 3. 将最终确定的数据库地址赋值给 Flask 配置
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev')
 database.init_app(app)
 
 # Admin initialization moved after route definitions to prevent routing conflicts
@@ -59,7 +77,7 @@ def load_artifacts_data():
 
 
 # ===========================
-# 1. 页面路由配置 (新增部分)
+# 1. 页面路由配置
 # ===========================
 
 # 首页
@@ -94,7 +112,7 @@ def game_page():
 
 
 # ===========================
-# 2. API 数据接口 (保持不变)
+# 2. API 数据接口
 # ===========================
 
 @app.route('/api/sites', methods=['GET'])
@@ -169,8 +187,6 @@ def get_quiz_questions():
 # 3. 资料库文件服务
 # ===========================
 
-# 配置资料存放的真实路径
-# 确保在你的项目里有一个 static 文件夹，里面有个 materials 文件夹
 MATERIALS_FOLDER = os.path.join(app.static_folder, 'materials')
 
 
