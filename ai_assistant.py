@@ -1,16 +1,21 @@
 import os
 import streamlit as st
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+from langchain_classic.chains.retrieval import create_retrieval_chain
 from langchain_community.document_loaders import TextLoader
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_chroma import Chroma
-from langchain.chains import RetrievalQA
+from dotenv import load_dotenv
 
+# 这一行会自动寻找并加载 .env 文件里的变量
+load_dotenv()
 # ----------------- 配置区域 -----------------
 # 这里填入你的 API KEY
 # 如果用 OpenAI: OS.environ["OPENAI_API_KEY"] = "sk-..."
 # 如果用 智谱GLM (推荐):
-os.environ["ZHIPUAI_API_KEY"] = "你的_ZHIPU_API_KEY"
+os.environ["ZHIPUAI_API_KEY"] = "ZHIPUAI_API_KEY"
 
 # 配置 LLM 和 Embedding
 # 智谱的兼容接口地址是 https://open.bigmodel.cn/api/paas/v4/
@@ -83,13 +88,34 @@ with st.sidebar:
 vectorstore = init_knowledge_base()
 
 if vectorstore:
-    # 创建检索链
-    # k=3 表示每次找 3 条最相关的资料
-    qa_chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        retriever=vectorstore.as_retriever(search_kwargs={"k": 3}),
-        return_source_documents=True
-    )
+    # 1. 定义提示词模板（这一步可以让 AI 扮演特定角色）
+    prompt_template = ChatPromptTemplate.from_template("""
+        你是一个考古学专家，请用通俗易懂但严谨的语言回答用户的问题。你专门研究楚系文化（包括青铜器、简帛文字、漆木器及战国历史）。
+        
+        你的任务是基于提供的【已知信息】（Context）来回答用户的提问。请遵循以下准则：
+        
+        1.  **角色设定**：你就像一位知识渊博的博物馆金牌讲解员。面对专业术语（如“鸟虫书”、“失蜡法”、“悬山顶”），尽量用现代生活中的类比或通俗语言进行解释，但必须保持历史事实的准确性。
+        2.  **依据事实**：请严格基于【已知信息】回答。如果信息中包含具体的出土年代、地点或尺寸数据，请务必引用以增加可信度。
+        3.  **诚实原则**：如果【已知信息】中没有包含回答问题所需的知识，请直接告知用户：“抱歉，目前的考古资料库中暂无此记录”，严禁臆测或编造历史事实。
+        4.  **回答结构**：
+            *   先直接给出核心结论。
+            *   再展开详细描述（文物的形制、纹饰、历史背景）。
+            *   最后（如果相关）可以延伸一两句该文物在楚文化中的独特地位或审美价值。
+        5.  **语气风格**：客观、典雅、引人入胜。不要使用过于僵硬的机器翻译腔，也不要使用轻浮的网络用语。
+        
+        【已知信息】：
+        {context}
+        
+        用户问题：
+        {question}
+       """)
+
+    # 2. 创建文档处理链（Stuff链：把检索到的文档塞进 prompt）
+    document_chain = create_stuff_documents_chain(llm, prompt_template)
+
+    # 3. 创建检索链（把 检索器 和 文档链 连起来）
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+    qa_chain = create_retrieval_chain(retriever, document_chain)
 
     # 聊天界面
     if "messages" not in st.session_state:
