@@ -3,6 +3,104 @@ import streamlit as st
 from dotenv import load_dotenv
 from zai import ZhipuAiClient
 
+# 页面基础配置（第一步先设置页面风格）
+st.set_page_config(
+    page_title="楚文化智能问答助手 | Chuscript",
+    page_icon="🏺",  # 青铜礼器图标贴合楚文化
+    layout="wide",  # 宽布局更适合展示内容
+    initial_sidebar_state="expanded"  # 侧边栏默认展开
+)
+
+# 自定义CSS（核心：楚文化风格样式）
+st.markdown("""
+<style>
+    /* 全局样式：楚文化配色（朱红、暗金、墨黑、石青） */
+    :root {
+        --chu-red: #9C2B1C;       /* 楚式朱红 */
+        --chu-gold: #D4AF37;      /* 楚式暗金 */
+        --chu-black: #1A1A1A;     /* 楚式墨黑 */
+        --chu-blue: #1E3A5F;      /* 楚式石青 */
+        --chu-bg: #F8F5F0;        /* 浅米底（仿竹简底色） */
+    }
+
+    /* 页面背景 */
+    .stApp {
+        background-color: var(--chu-bg);
+        background-image: url("https://p11-flow-imagex-download-sign.byteimg.com/tos-cn-i-a9rns2rl98/ebf0bf5e169c4fbeb35952ca5133ad50.png~tplv-a9rns2rl98-24:720:720.png");
+        background-size: cover;
+        background-attachment: fixed;
+        background-opacity: 0.1;
+    }
+
+    /* 标题样式：楚文化书法感 */
+    h1 {
+        color: var(--chu-red);
+        font-family: "SimHei", "STHeiti", serif;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        border-bottom: 2px solid var(--chu-gold);
+        padding-bottom: 10px;
+    }
+
+    /* 聊天框样式优化 */
+    .stChatMessage {
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        backdrop-filter: blur(5px);
+    }
+
+    /* 用户消息框 */
+    [data-testid="stChatMessageUser"] {
+        background-color: rgba(30, 58, 95, 0.1);
+        border-left: 4px solid var(--chu-blue);
+    }
+
+    /* 助手消息框 */
+    [data-testid="stChatMessageAssistant"] {
+        background-color: rgba(156, 43, 28, 0.05);
+        border-left: 4px solid var(--chu-red);
+    }
+
+    /* 侧边栏样式 */
+    [data-testid="stSidebar"] {
+        background-color: rgba(26, 26, 26, 0.9);
+        color: var(--chu-gold);
+    }
+
+    /* 按钮样式 */
+    .stButton>button {
+        background-color: var(--chu-red);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-family: "SimHei", serif;
+    }
+
+    .stButton>button:hover {
+        background-color: #7A2014;
+    }
+
+    /* 输入框样式 */
+    [data-testid="stChatInput"]>div>textarea {
+        border: 1px solid var(--chu-gold);
+        border-radius: 8px;
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* 展开面板样式 */
+    .stExpander {
+        border: 1px solid var(--chu-gold);
+        border-radius: 6px;
+    }
+
+    /* 提示文字样式 */
+    .caption {
+        color: var(--chu-blue);
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # 加载.env文件变量
 load_dotenv()
 
@@ -13,7 +111,7 @@ knowledge_base_id = os.getenv("KNOWLEDGE_BASE_ID")
 # 检查配置是否读取成功
 if not api_key:
     st.error("❌ 未找到 ZHIPUAI_API_KEY，请检查 .env 文件！")
-    st.stop()  # 用st.stop替代raise，避免程序崩溃，更友好
+    st.stop()
 if not knowledge_base_id:
     st.error("❌ 未找到 KNOWLEDGE_BASE_ID，请检查 .env 文件！")
     st.stop()
@@ -94,20 +192,48 @@ def query_knowledge_base(question):
 
 
 # ----------------- Streamlit界面 -----------------
-st.title("🛡️ 楚文化智能问答助手")
-st.markdown("基于 **智谱AI知识库 + GLM** | 专注于楚系文字与考古知识")
+# 主标题和副标题
+st.title("🏺 楚文化智能问答助手")
+st.markdown("""
+<div style="color: var(--chu-blue); font-size: 16px; font-style: italic; margin-bottom: 20px;">
+基于智谱AI知识库 + GLM | 深耕楚系文字·考古·文物研究
+</div>
+""", unsafe_allow_html=True)
 
-# 侧边栏：显示配置和调试信息
+# 侧边栏：楚文化风格的配置和调试信息
 with st.sidebar:
-    st.write("📖 **知识库配置**")
-    st.success("✅ 智谱AI客户端已初始化")
-    st.info(f"当前知识库ID: \n{knowledge_base_id}")
-    st.write("🔍 调试信息")
-    st.caption(f"API Key前8位: {api_key[:8]}..." if api_key else "未配置")
+    st.markdown("### 📜 楚简档案库")
+
+    # st.markdown("### 🔍 调试信息")
+    # st.markdown(f"""
+    # <div style="color: #D4AF37; font-size: 12px;">
+    #     API Key前8位: {api_key[:8]}...
+    # </div>
+    # """, unsafe_allow_html=True)
+
+    # 楚文化小贴士（增加文化氛围）
+    st.markdown("### 📖 楚韵小识")
+    st.markdown("""
+    <div style="font-size: 13px; color: #E0E0E0; line-height: 1.6;">
+        • 楚系文字又称"鸟虫书"，是金文的一种特殊形态<br>
+        • 楚国青铜器以失蜡法铸造，纹饰繁复瑰丽<br>
+        • 郭店楚简出土于湖北荆门，记载了早期儒道思想
+    </div>
+    """, unsafe_allow_html=True)
 
 # 初始化聊天记录
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = [
+        {
+            "role": "assistant",
+            "content": """您好！我是楚文化智能问答助手，专注于解答楚系文字、楚式文物、楚地考古相关问题。例如：
+- 郭店楚简出土于哪一年？
+- 楚式青铜器的纹饰有哪些特点？
+- 鸟虫书的艺术特征是什么？
+
+❗还可以对知识挑战的问题进行详细解答噢！"""
+        }
+    ]
 
 # 显示历史聊天记录
 for msg in st.session_state.messages:
@@ -115,7 +241,7 @@ for msg in st.session_state.messages:
         st.write(msg["content"])
 
 # 处理用户输入
-if prompt := st.chat_input("请输入关于楚文化的问题，例如：郭店楚简出土于哪一年？"):
+if prompt := st.chat_input("请输入关于楚文化的问题，探寻荆楚文明的千年奥秘..."):
     # 保存并显示用户问题
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -123,17 +249,22 @@ if prompt := st.chat_input("请输入关于楚文化的问题，例如：郭店�
 
     # 调用知识库问答并显示结果
     with st.chat_message("assistant"):
-        with st.spinner("🔍 正在检索楚文化考古资料库..."):
+        with st.spinner("🕯️ 正在检索楚简帛书，梳理荆楚文脉..."):
             answer, citations = query_knowledge_base(prompt)
             st.write(answer)
 
             # 显示检索到的参考内容（验证是否真的调用了知识库）
             if citations:
-                with st.expander("📚 知识库参考内容", expanded=False):
+                with st.expander("📜 出土文献参考", expanded=False):
+                    st.markdown("### 🔍 知识库引证内容：")
                     for idx, cite in enumerate(citations, 1):
                         # 提取引用内容（兼容zai库的返回格式）
                         cite_content = getattr(cite, 'content', '无')
-                        st.caption(f"参考{idx}: {cite_content[:200]}...")
+                        st.markdown(f"""
+                        <div style="padding: 8px; margin: 5px 0; border-left: 3px solid var(--chu-gold);">
+                            <strong>参考{idx}：</strong> {cite_content[:300]}...
+                        </div>
+                        """, unsafe_allow_html=True)
 
     # 保存AI回答
     st.session_state.messages.append({"role": "assistant", "content": answer})
