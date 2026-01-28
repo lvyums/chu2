@@ -1,154 +1,139 @@
 import os
 import streamlit as st
-from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-from langchain_classic.chains.retrieval import create_retrieval_chain
-from langchain_community.document_loaders import TextLoader
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_chroma import Chroma
 from dotenv import load_dotenv
+from zai import ZhipuAiClient
 
-# 这一行会自动寻找并加载 .env 文件里的变量
+# 加载.env文件变量
 load_dotenv()
-# ----------------- 配置区域 -----------------
-# 这里填入你的 API KEY
-# 如果用 OpenAI: OS.environ["OPENAI_API_KEY"] = "sk-..."
-# 如果用 智谱GLM (推荐):
-os.environ["ZHIPUAI_API_KEY"] = "ZHIPUAI_API_KEY"
 
-# 配置 LLM 和 Embedding
-# 智谱的兼容接口地址是 https://open.bigmodel.cn/api/paas/v4/
-# 模型使用 GLM-4-Flash (速度快免费/便宜) 或 GLM-4
-llm = ChatOpenAI(
-    temperature=0.3,
-    model="glm-4-flash",
-    openai_api_base="https://open.bigmodel.cn/api/paas/v4/",
-    openai_api_key=os.environ["ZHIPUAI_API_KEY"]
+# ----------------- 配置区域 -----------------
+api_key = os.getenv("ZHIPUAI_API_KEY")
+knowledge_base_id = os.getenv("KNOWLEDGE_BASE_ID")
+
+# 检查配置是否读取成功
+if not api_key:
+    st.error("❌ 未找到 ZHIPUAI_API_KEY，请检查 .env 文件！")
+    st.stop()  # 用st.stop替代raise，避免程序崩溃，更友好
+if not knowledge_base_id:
+    st.error("❌ 未找到 KNOWLEDGE_BASE_ID，请检查 .env 文件！")
+    st.stop()
+
+# 初始化智谱AI客户端（增加超时配置）
+client = ZhipuAiClient(
+    api_key=api_key,
+    timeout=30  # 增加超时时间，避免检索超时
 )
 
 
-# 智谱的 Embedding 目前 LangChain 兼容性稍差，这里用通用的或者 OpenAI 格式
-# 如果为了简单，这里我们可以临时用 huggingface 的开源模型，或者直接用 OpenAI 的接口格式调用智谱 embedding
-# 为了演示最简便的方法，我们假设你用的是智谱的标准 embedding (需要安装 zhipuai 库)
-# 但为降低门槛，这里演示使用 OpenAI 兼容模式（或者如果你有 OpenAI Key 直接用即可）
-# 下面展示标准 LangChain 流程
-# -------------------------------------------
-
-@st.cache_resource
-def init_knowledge_base():
+def query_knowledge_base(question):
     """
-    初始化知识库：读取txt -> 切分 -> 向量化 -> 存入向量数据库
-    使用 @st.cache_resource 保证只有第一次运行时加载，之后直接读取缓存
+    使用智谱AI知识库进行问答（修复检索逻辑+优化错误处理）
     """
-    # 1. 加载数据
-    if not os.path.exists("chu_knowledge.txt"):
-        return None
+    try:
+        # 调用智谱API，强制触发知识库检索
+        response = client.chat.completions.create(
+            model="glm-4-flash",  # 推荐使用glm-4效果更好（需确保API Key有该模型权限）
+            messages=[
+                # 新增系统提示词，规范回答风格
+                {
+                    "role": "system",
+                    "content": """        
+                    1.  **角色设定**：你就像一位知识渊博的博物馆金牌讲解员。面对专业术语（如“鸟虫书”、“失蜡法”、“悬山顶”），尽量用现代生活中的类比或通俗语言进行解释，但必须保持历史事实的准确性。
+                    2.  **依据事实**：请严格基于【已知信息】回答。如果信息中包含具体的出土年代、地点或尺寸数据，请务必引用以增加可信度。
+                    3.  **诚实原则**：如果【已知信息】中没有包含回答问题所需的知识，请直接告知用户：“抱歉，目前的考古资料库中暂无此记录”，严禁臆测或编造历史事实。
+                    4.  **回答结构**：
+                        *   先直接给出核心结论。
+                        *   再展开详细描述（文物的形制、纹饰、历史背景）。
+                        *   最后（如果相关）可以延伸一两句该文物在楚文化中的独特地位或审美价值。
+                    5.  **语气风格**：客观、典雅、引人入胜。"""
+                },
+                {"role": "user", "content": question}
+            ],
+            tools=[
+                {
+                    "type": "retrieval",
+                    "retrieval": {
+                        "knowledge_id": knowledge_base_id,  # 智谱zai库要求的正确参数名
+                        # 修正：占位符用{{}}双大括号（智谱官方要求）
+                        "prompt_template": """从文档
+\"\"\"
+{{knowledge}}
+\"\"\"
+中找问题
+\"\"\"
+{{question}}
+\"\"\"
+的答案，找到答案就仅使用文档语句回答问题并说明该数据来自已收录知识库，找不到答案就用自身知识回答并且告诉用户该信息不是来自已收录被证实过的数据，来自网络。""",
+                        "top_k": 3,  # 检索最相关的3条内容
+                        "enable_citation": True  # 开启引文标注，便于验证是否检索到内容
+                    }
+                }
+            ],
+            tool_choice={  # 强制触发检索工具（关键！避免模型跳过检索）
+                "type": "retrieval"
+            },
+            temperature=0.2,  # 降低随机性，保证回答严谨
+            stream=False
+        )
+        # 解析回答内容
+        answer = response.choices[0].message.content
+        # 提取引文（调试用，确认是否检索到知识库内容）
+        citations = []
+        if hasattr(response.choices[0].message, 'tool_calls') and response.choices[0].message.tool_calls:
+            for tool_call in response.choices[0].message.tool_calls:
+                if tool_call.type == "retrieval" and hasattr(tool_call.retrieval, 'citations'):
+                    citations = tool_call.retrieval.citations
+        return answer, citations
+    except Exception as e:
+        # 输出详细错误信息，便于调试
+        error_info = f"查询出错: {str(e)}"
+        # 若有response对象，补充响应信息
+        if 'response' in locals():
+            error_info += f"\n响应详情: {str(response)}"
+        return error_info, []
 
-    loader = TextLoader("chu_knowledge.txt", encoding="utf-8")
-    docs = loader.load()
 
-    # 2. 切分文本 (Chunks)
-    # 把长文章切成小块，方便检索
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=50)
-    splits = text_splitter.split_documents(docs)
-
-    # 3. 向量化 (Embeddings)
-    # 注意：如果没有 OpenAI 额度，可以使用 'sentence-transformers' (免费本地模型)
-    # 这里演示使用 ZhipuAI 的 Embedding (需自定义或使用兼容层)，
-    # 为简化代码，此处假设你使用 OpenAI 或 智谱兼容的 Embedding 接口
-    embeddings = OpenAIEmbeddings(
-        model="embedding-2",  # 智谱的 embedding 模型名
-        openai_api_base="https://open.bigmodel.cn/api/paas/v4/",
-        openai_api_key=os.environ["ZHIPUAI_API_KEY"]
-    )
-
-    # 4. 存入 Chroma 向量数据库 (内存模式)
-    vectorstore = Chroma.from_documents(documents=splits, embedding=embeddings)
-
-    return vectorstore
-
-
-# 初始化界面
+# ----------------- Streamlit界面 -----------------
 st.title("🛡️ 楚文化智能问答助手")
-st.markdown("基于 **LangChain + GLM** | 专注于楚系文字与考古知识")
+st.markdown("基于 **智谱AI知识库 + GLM** | 专注于楚系文字与考古知识")
 
-# 侧边栏
+# 侧边栏：显示配置和调试信息
 with st.sidebar:
-    st.write("📖 **知识库状态**")
-    if os.path.exists("chu_knowledge.txt"):
-        st.success("知识库文件已检测到")
-        if st.button("🔄 重建/更新知识库"):
-            st.cache_resource.clear()
-            st.rerun()
-    else:
-        st.error("请在根目录创建 chu_knowledge.txt 并放入资料")
+    st.write("📖 **知识库配置**")
+    st.success("✅ 智谱AI客户端已初始化")
+    st.info(f"当前知识库ID: \n{knowledge_base_id}")
+    st.write("🔍 调试信息")
+    st.caption(f"API Key前8位: {api_key[:8]}..." if api_key else "未配置")
 
-# 加载知识库
-vectorstore = init_knowledge_base()
+# 初始化聊天记录
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-if vectorstore:
-    # 1. 定义提示词模板（这一步可以让 AI 扮演特定角色）
-    prompt_template = ChatPromptTemplate.from_template("""
-        你是一个考古学专家，请用通俗易懂但严谨的语言回答用户的问题。你专门研究楚系文化（包括青铜器、简帛文字、漆木器及战国历史）。
-        
-        你的任务是基于提供的【已知信息】（Context）来回答用户的提问。请遵循以下准则：
-        
-        1.  **角色设定**：你就像一位知识渊博的博物馆金牌讲解员。面对专业术语（如“鸟虫书”、“失蜡法”、“悬山顶”），尽量用现代生活中的类比或通俗语言进行解释，但必须保持历史事实的准确性。
-        2.  **依据事实**：请严格基于【已知信息】回答。如果信息中包含具体的出土年代、地点或尺寸数据，请务必引用以增加可信度。
-        3.  **诚实原则**：如果【已知信息】中没有包含回答问题所需的知识，请直接告知用户：“抱歉，目前的考古资料库中暂无此记录”，严禁臆测或编造历史事实。
-        4.  **回答结构**：
-            *   先直接给出核心结论。
-            *   再展开详细描述（文物的形制、纹饰、历史背景）。
-            *   最后（如果相关）可以延伸一两句该文物在楚文化中的独特地位或审美价值。
-        5.  **语气风格**：客观、典雅、引人入胜。不要使用过于僵硬的机器翻译腔，也不要使用轻浮的网络用语。
-        
-        【已知信息】：
-        {context}
-        
-        用户问题：
-        {question}
-       """)
+# 显示历史聊天记录
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.write(msg["content"])
 
-    # 2. 创建文档处理链（Stuff链：把检索到的文档塞进 prompt）
-    document_chain = create_stuff_documents_chain(llm, prompt_template)
+# 处理用户输入
+if prompt := st.chat_input("请输入关于楚文化的问题，例如：郭店楚简出土于哪一年？"):
+    # 保存并显示用户问题
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.write(prompt)
 
-    # 3. 创建检索链（把 检索器 和 文档链 连起来）
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
-    qa_chain = create_retrieval_chain(retriever, document_chain)
+    # 调用知识库问答并显示结果
+    with st.chat_message("assistant"):
+        with st.spinner("🔍 正在检索楚文化考古资料库..."):
+            answer, citations = query_knowledge_base(prompt)
+            st.write(answer)
 
-    # 聊天界面
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+            # 显示检索到的参考内容（验证是否真的调用了知识库）
+            if citations:
+                with st.expander("📚 知识库参考内容", expanded=False):
+                    for idx, cite in enumerate(citations, 1):
+                        # 提取引用内容（兼容zai库的返回格式）
+                        cite_content = getattr(cite, 'content', '无')
+                        st.caption(f"参考{idx}: {cite_content[:200]}...")
 
-    # 显示历史记录
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.write(msg["content"])
-
-    # 处理用户输入
-    if prompt := st.chat_input("请输入关于楚文化的问题，例如：什么是鸟虫书？"):
-        # 1. 显示用户问题
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.write(prompt)
-
-        # 2. 调用 AI 回答
-        with st.chat_message("assistant"):
-            with st.spinner("🔍 正在检索考古资料库..."):
-                response = qa_chain.invoke({"query": prompt})
-                answer = response["result"]
-                source_docs = response["source_documents"]
-
-                st.write(answer)
-
-                # (可选) 显示参考来源，增强可信度
-                with st.expander("📚 参考资料来源"):
-                    for doc in source_docs:
-                        st.caption(f"...{doc.page_content}...")
-
-        # 3. 保存 AI 回答
-        st.session_state.messages.append({"role": "assistant", "content": answer})
-
-else:
-    st.info("👈 请先在侧边栏确认知识库文件已就绪。")
+    # 保存AI回答
+    st.session_state.messages.append({"role": "assistant", "content": answer})
