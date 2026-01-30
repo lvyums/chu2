@@ -1,4 +1,4 @@
-
+READ
 # 楚文字知识性科普网站 (Chu Script Knowledge Popularization Platform)
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
@@ -20,17 +20,39 @@
 *   **🗺️ 时空可视化地图**：
     *   动态时间轴：展示楚国疆域随年代的变化。
     *   遗址分布：点击地图坐标查看相关出土简牍与文物详情。
+    *   中心点标记：突出显示楚国都城等重要地理位置。
+    *   时代筛选：通过时间轴滑块筛选不同时期的遗址分布。
+![地图](static/picture/地图.png)
+*   **🖼️ 简牍图鉴**：
+    *   文物展示：以卡片形式展示楚地出土的简牍文物。
+    *   高清影像：提供文物的高清图片和详细说明。
+    *   分类标签：按文物类型进行分类展示。
+    *   悬停效果：鼠标悬停显示文物详细信息。
+![图鉴](static/picture/图鉴.png)
+*   **📚 学术资料库**：
+    *   资料下载：提供楚文化研究相关的 PDF 文档和图片资料。
+    *   在线预览：支持在线预览 PDF 和图片文件。
+    *   文件管理：后台支持资料的上传、删除管理。
+    *   分类浏览：按文件类型自动分类显示。
+![资料](static/picture/资料.png)
 *   **🎮 楚韵·文字挑战**：
     *   每日随机题库：基于 JSON/数据库 的 50+ 道题库，涵盖字形辨析、历史典故与器物知识。
     *   互动反馈：即时判断正误，提供详细的学术解析。
-*   **🛡️ 综合管理后台**：
+![文字挑战](static/picture/文字挑战.png)
+![文字挑战2](static/picture/文字挑战2.png)
+*   **🤖 楚文化智能助手**：
+    *   AI 对话问答：基于智谱 AI 知识库，解答楚系文字、楚式文物、楚地考古相关问题。
+    *   悬浮球入口：页面右下角设有可拖动的 AI 助手悬浮球，长按可拖动位置，单击直接跳转。
+    *   知识检索：支持从知识库中检索相关内容，并提供引文标注，确保回答有据可查。
+![AI助手](static/picture/AI助手.png)
+![AI助手2](static/picture/AI助手2.png)
+
+* **🛡️ 综合管理后台**：
     *   可视化仪表盘：实时统计题库数量、遗址点位与访问数据。
     *   数据管理：支持对题库、遗址坐标、中心点配置的增删改查 (CRUD)。
     *   安全认证：基于 Flask-Login 的管理员权限控制。
-*   **⚙️ 双模数据架构**：
-    *   开发友好：支持直接读取 JSON 文件 (`quiz_questions.json`, `sites.json`)。
-    *   生产稳定：通过 `migrate.py` 工具一键将 JSON 同步至 SQLite/PostgreSQL 数据库。
-
+![后台1](static/picture/后台1.png)
+![后台2](static/picture/后台2.png)
 ---
 
 ## 🛠️ 技术栈
@@ -38,6 +60,7 @@
 *   **后端核心**：Python Flask, SQLAlchemy (ORM)
 *   **后台管理**：Flask-Admin, Flask-Login
 *   **前端交互**：HTML5, CSS3 (自定义样式), JavaScript (ES6+), Leaflet.js (地图)
+*   **AI 智能助手**：Streamlit, ZhipuAI (智谱 AI) SDK, Zai 知识库
 *   **数据存储**：SQLite (本地开发) / PostgreSQL (生产环境)
 *   **服务器**：Nginx + Gunicorn
 
@@ -132,6 +155,12 @@ DATABASE_URL=sqlite:///chu.db
 ````
 ADMIN_PASSWORD=123456
 ````
+
+AI 助手配置 (可选)
+````
+ZHIPUAI_API_KEY=your_zhipu_api_key
+KNOWLEDGE_BASE_ID=your_knowledge_base_id
+````
 ### 4.数据初始化
 
 本项目包含自动迁移脚本，可将静态 JSON 数据导入数据库：
@@ -154,6 +183,22 @@ python migrate.py validate
 python app.py
 前台首页: http://127.0.0.1:5000
 管理后台: http://127.0.0.1:5000/admin
+```
+
+### 5. 启动 AI 智能助手 (可选)
+
+AI 助手基于 Streamlit 构建，需要单独启动：
+
+```Bash
+# 安装依赖
+pip install streamlit zai
+
+# 启动 AI 助手服务
+streamlit run ai_assistant.py
+# AI 助手访问地址: http://127.0.0.1:8501
+
+# 悬浮球链接配置
+# 修改 static/js/aiAssistantModule.js 中的 AI_ASSISTANT_URL 变量
 ```
 # 🔧 数据维护指南
 方式一：通过管理后台 (推荐)
