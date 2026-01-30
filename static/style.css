@@ -135,3 +135,65 @@ footer {
     margin-top: 60px;
     border-top: 4px solid var(--chu-ocher);
 }
+
+/* --- AI助手悬浮球 --- */
+.ai-float-ball {
+    position: fixed;
+    right: 30px;
+    bottom: 100px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--chu-red), #8B0000);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(184, 59, 40, 0.4);
+    cursor: pointer;
+    z-index: 9999;
+    transition: all 0.3s ease;
+    border: 3px solid var(--chu-ocher);
+}
+
+.ai-float-ball:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(184, 59, 40, 0.6);
+}
+
+.ai-float-ball svg {
+    width: 30px;
+    height: 30px;
+    fill: white;
+}
+
+/* 悬浮球提示文字 */
+.ai-float-ball .tooltip {
+    position: absolute;
+    right: 75px;
+    background: var(--chu-indigo);
+    color: var(--text-light);
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-size: 14px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid var(--chu-ocher);
+}
+
+.ai-float-ball .tooltip::after {
+    content: '';
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 8px 0 8px 8px;
+    border-style: solid;
+    border-color: transparent transparent transparent var(--chu-indigo);
+}
+
+.ai-float-ball:hover .tooltip {
+    opacity: 1;
+    visibility: visible;
+}
