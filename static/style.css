@@ -151,7 +151,7 @@ footer {
     box-shadow: 0 4px 15px rgba(184, 59, 40, 0.4);
     cursor: pointer;
     z-index: 9999;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: 3px solid var(--chu-ocher);
 }
 
@@ -161,9 +161,8 @@ footer {
 }
 
 .ai-float-ball svg {
-    width: 30px;
-    height: 30px;
-    fill: white;
+    width: 32px;
+    height: 32px;
 }
 
 /* 悬浮球提示文字 */
